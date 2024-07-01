@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "sound-merge"
+version = "0.1.0"
+description = ""
+authors = ["XEas <mokeevgleb5@gmail.com>"]
+readme = "README.md"
+packages = [{include = "sound_merge", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+logging = "^0.4.9.6"
+pydub = "^0.25.1"
+stempeg = "^0.2.3"
+numpy = "1.26.4"
+scipy = "^1.14.0"
+matplotlib = "^3.9.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
