@@ -1,11 +1,11 @@
 import wave
-from scipy.signal import resample, spectrogram, resample_poly
+from scipy.signal import resample, spectrogram
 import os
 import tempfile
 import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
-
+from config import *
 class WaveObject:
     def __init__(self, audio_data, num_frames, num_channels=2, bytes_per_sample=2,
                  sample_rate=44100):
@@ -26,19 +26,20 @@ class WaveObject:
             sample_rate = wave_read.getframerate()
             return cls(audio_data, num_frames, num_channels, bytes_per_sample, sample_rate)
     
-    def resample_o(self, new_sample_rate):
-        original_num_samples = int(len(self.audio_data) / self.bytes_per_sample / self.num_channels)
+    @classmethod
+    def resample_o(cls, new_sample_rate):
+        original_num_samples = int(len(cls.audio_data) / cls.bytes_per_sample / cls.num_channels)
         
-        new_num_samples = int(original_num_samples * (new_sample_rate / self.sample_rate))
+        new_num_samples = int(original_num_samples * (new_sample_rate / cls.sample_rate))
         
-        audio_array = np.frombuffer(self.audio_data, dtype=np.int16)
-        audio_array = audio_array.reshape(-1, self.num_channels)
+        audio_array = np.frombuffer(cls.audio_data, dtype=np.int16)
+        audio_array = audio_array.reshape(-1, cls.num_channels)
         
         resampled_audio_array = resample(audio_array, new_num_samples, axis=0)
 
         new_audio_data = resampled_audio_array.astype(np.int16).ravel().tobytes()
         
-        return WaveObject(new_audio_data, self.num_frames, self.num_channels, self.bytes_per_sample, new_sample_rate)
+        return cls(new_audio_data, cls.num_frames, cls.num_channels, cls.bytes_per_sample, new_sample_rate)
         
     def save_to_file(self, file_path):
         with wave.open(file_path, 'wb') as wave_write:
@@ -48,9 +49,9 @@ class WaveObject:
             wave_write.writeframes(self.audio_data)
 
     def display_waveform(self):
-        frames = self.audio_data
         data_display = np.frombuffer(self.audio_data, dtype=np.int16).astype(np.float32) / 32768
-
+        if self.num_channels == 2:
+            audio_data_np = audio_data_np.reshape(-1, 2).mean(axis=1)
         plt.figure(figsize=(10, 4))
         plt.plot(data_display)
         plt.title('Wave File Plot')
@@ -65,7 +66,7 @@ class WaveObject:
     
         f, t, Sxx = spectrogram(audio_data_np, self.sample_rate)
         plt.figure(figsize=(10, 4))
-        plt.pcolormesh(t, f, 10 * np.log10(Sxx), shading='gouraud')
+        plt.pcolormesh(t, f, np.log10(Sxx), shading='gouraud')
         plt.ylabel('Frequency [Hz]')
         plt.xlabel('Time [sec]')
         plt.title('Spectrogram')
@@ -114,8 +115,6 @@ class WaveObject:
 
     @staticmethod
     def mix(wave1, wave2, volume1=1, volume2=1):
-        #to do: add volume control
-        
         wave1 = WaveObject.ensure_wave_object(wave1)
         if wave1 is None:
             return None
@@ -227,5 +226,5 @@ class FlacObject:
 
 
 class Benchmark:
-    # 0-1 confidence level of that there is music in the background
+    # 0.0-1.0 confidence level of that there is music in the background
     pass

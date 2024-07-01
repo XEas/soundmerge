@@ -19,8 +19,8 @@ def unpack_tar(archive_path, dest_path):
 # unpack zip archive
 def unpack_zip(archive_path, dest_path):
     try:
-        with zipfile.ZipFile("/Volumes/Drive-1/Datasets/musdb18.zip", 'r') as zip_ref:
-            zip_ref.extractall("/Volumes/Drive-1/Datasets/speech_unpacked/musdb18")
+        with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+            zip_ref.extractall(dest_path)
     except zipfile.error as e:
         logger.error(f"Error reading archive: {e}")
     except OSError as e:

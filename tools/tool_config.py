@@ -2,6 +2,7 @@ from pathlib import Path
 import logging
 
 dataset_dir = Path("/Volumes/Drive-1/Datasets/speech_unpacked")
+dataset_dir_compressed = Path("/Volumes/Drive-1/Datasets")
 libri_testset_dir = dataset_dir / "LibriTTS_R"
 musan_music_src = dataset_dir / "musan/music"
 musan_speech_src = dataset_dir / "musan/speech"

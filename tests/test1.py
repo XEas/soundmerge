@@ -1,21 +1,17 @@
-#to do: fix the paths
-
+from config import *
 import sys
-sys.path.insert(1, "/Users/glebmokeev/Rask/sound-merge/src/sound_merge")
+sys.path.insert(1, str(home / "sound-merge/src/sound_merge"))
 
 from merge import WaveObject
-
-import wave
 import numpy as np
-import matplotlib.pyplot as plt
 
-light_path = '/Users/glebmokeev/Rask/data/music-mixed/music-fma-wa-0055.wav' #16 kHz
-light_path2 = '/Users/glebmokeev/Rask/data/music-clean/musdb-sample59.wav' #44.1 kHz
+light_path = music_dir_mixed / "music-fma-wa-0055.wav" #16 kHz
+light_path2 = music_dir_clean / "musdb-sample59.wav" #44.1 kHz
 
-heavy_path = "/Users/glebmokeev/Rask/data/music-mixed/music-fma-wa-0013.wav" #16 kHz
-heavy_path2 = "/Users/glebmokeev/Rask/data/music-clean/musdb-sample92.wav" #44.1 kHz
+heavy_path = music_dir_mixed / "music-fma-wa-0013.wav" #16 kHz
+heavy_path2 = music_dir_clean / "musdb-sample92.wav" #44.1 kHz
 
-new_file_path = "/Users/glebmokeev/Rask/test_dest/new.wav"
+new_file_path = test_dest / "new.wav"
 
 def test_init():
     wf = WaveObject.from_wave_file(light_path)
@@ -30,13 +26,13 @@ def test_display_waveform():
     wf.display_waveform()
 
 def test_resample():
-    resample_path = "/Users/glebmokeev/Rask/test_dest/resample.wav"
+    resample_path = test_dest / "resample.wav"
     wf = WaveObject.from_wave_file(light_path)
     wf_resampled = wf.resample_o(15000)
     wf_resampled.save_to_file(resample_path)
 
 def test_concatenate():
-    concatenate_path = "/Users/glebmokeev/Rask/test_dest/concatenate.wav"
+    concatenate_path = test_dest / "concatenate.wav"
     wf1 = WaveObject.from_wave_file(light_path)
     wf2 = WaveObject.from_wave_file(heavy_path)
     # wf_long = wf1.concatenate(heavy_path)
@@ -45,7 +41,7 @@ def test_concatenate():
     wf_long.save_to_file(concatenate_path)
 
 def test_mix():
-    mix_path = "/Users/glebmokeev/Rask/test_dest/mix.wav"
+    mix_path = test_dest / "mix.wav"
     wf1 = WaveObject.from_wave_file(light_path2)
     wf2 = WaveObject.from_wave_file(heavy_path2)
     wf_mixed = WaveObject.mix(wf1, wf2, 0.1, 1.5)
@@ -92,4 +88,4 @@ def test_display_spectogram():
 
 # test_frame_segment()
 
-test_display_spectogram()
+# test_display_spectogram()
