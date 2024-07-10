@@ -6,10 +6,12 @@ import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 from config import *
+
 class WaveObject:
     def __init__(self, audio_data, num_frames, num_channels=2, bytes_per_sample=2,
                  sample_rate=44100):
         self.audio_data = audio_data
+        self.audio_array = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / (2 ** (bytes_per_sample * 8 - 1))
         self.num_channels = num_channels
         self.bytes_per_sample = bytes_per_sample
         self.sample_rate = sample_rate
@@ -18,7 +20,7 @@ class WaveObject:
 
     @classmethod
     def from_wave_file(cls, wave_file):
-        with wave.open(wave_file, 'rb') as wave_read:
+        with wave.open(str(wave_file), 'rb') as wave_read:
             num_frames = wave_read.getnframes()
             audio_data = wave_read.readframes(num_frames)
             num_channels = wave_read.getnchannels()
@@ -26,44 +28,42 @@ class WaveObject:
             sample_rate = wave_read.getframerate()
             return cls(audio_data, num_frames, num_channels, bytes_per_sample, sample_rate)
     
-    @classmethod
-    def resample_o(cls, new_sample_rate):
-        original_num_samples = int(len(cls.audio_data) / cls.bytes_per_sample / cls.num_channels)
+    
+    def resample_o(self, new_sample_rate):
+        original_num_samples = int(len(self.audio_data) / self.bytes_per_sample / self.num_channels)
         
-        new_num_samples = int(original_num_samples * (new_sample_rate / cls.sample_rate))
+        new_num_samples = int(original_num_samples * (new_sample_rate / self.sample_rate))
         
-        audio_array = np.frombuffer(cls.audio_data, dtype=np.int16)
-        audio_array = audio_array.reshape(-1, cls.num_channels)
+        audio_array_ch = (self.audio_array).reshape(-1, self.num_channels)
         
-        resampled_audio_array = resample(audio_array, new_num_samples, axis=0)
+        resampled_audio_array = resample(audio_array_ch, new_num_samples, axis=0)
 
         new_audio_data = resampled_audio_array.astype(np.int16).ravel().tobytes()
         
-        return cls(new_audio_data, cls.num_frames, cls.num_channels, cls.bytes_per_sample, new_sample_rate)
+        return WaveObject(new_audio_data, self.num_frames, self.num_channels, self.bytes_per_sample, new_sample_rate)
         
     def save_to_file(self, file_path):
-        with wave.open(file_path, 'wb') as wave_write:
+        with wave.open(str(file_path), 'wb') as wave_write:
             wave_write.setnchannels(self.num_channels)
             wave_write.setsampwidth(self.bytes_per_sample)
             wave_write.setframerate(self.sample_rate)
             wave_write.writeframes(self.audio_data)
 
     def display_waveform(self):
-        data_display = np.frombuffer(self.audio_data, dtype=np.int16).astype(np.float32) / 32768
+        audio_data_np = self.audio_array
         if self.num_channels == 2:
-            audio_data_np = audio_data_np.reshape(-1, 2).mean(axis=1)
+            audio_data_np = (self.audio_array).reshape(-1, 2).mean(axis=1)
         plt.figure(figsize=(10, 4))
-        plt.plot(data_display)
+        plt.plot(audio_data_np)
         plt.title('Wave File Plot')
         plt.xlabel('Frame')
         plt.ylabel('Amplitude')
         plt.show()
     
     def display_spectogram(self):
-        audio_data_np = np.frombuffer(self.audio_data, dtype=np.int16).astype(np.float32) / 32768
+        audio_data_np = self.audio_array
         if self.num_channels == 2:
-            audio_data_np = audio_data_np.reshape(-1, 2).mean(axis=1)
-    
+            audio_data_np = (self.audio_array).reshape(-1, 2).mean(axis=1)
         f, t, Sxx = spectrogram(audio_data_np, self.sample_rate)
         plt.figure(figsize=(10, 4))
         plt.pcolormesh(t, f, np.log10(Sxx), shading='gouraud')
@@ -125,18 +125,15 @@ class WaveObject:
         
         if not (WaveObject.comparability(wave1, wave2)):
             return None
-        
-        audio_array1 = np.frombuffer(wave1.audio_data, dtype=np.int16).astype(np.float32) / 32768
-        audio_array2 = np.frombuffer(wave2.audio_data, dtype=np.int16).astype(np.float32) / 32768
 
-        len1, len2 = len(audio_array1), len(audio_array2)
+        len1, len2 = len(wave1.audio_array), len(wave2.audio_array)
 
         if len1 < len2:
-            audio_array1 = np.pad(audio_array1, (0, len2 - len1), 'constant')
+            wave1.audio_array = np.pad(wave1.audio_array, (0, len2 - len1), 'constant')
         elif len2 < len1:
-            audio_array2 = np.pad(audio_array2, (0, len1 - len2), 'constant')
+            wave2.audio_array = np.pad(wave2.audio_array, (0, len1 - len2), 'constant')
 
-        mixed_array = audio_array1 * volume1 + audio_array2 * volume2
+        mixed_array = wave1.audio_array * volume1 + wave2.audio_array * volume2
 
         if np.max(np.abs(mixed_array)) > 1:
             mixed_array /= np.max(np.abs(mixed_array))
