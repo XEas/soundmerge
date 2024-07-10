@@ -1,6 +1,8 @@
-from config import *
 import sys
+import os
+from sound_merge.config import *
 sys.path.insert(1, str(home / "sound-merge/src/sound_merge"))
+
 
 from merge import WaveObject
 import numpy as np
@@ -13,6 +15,7 @@ heavy_path2 = music_dir_clean / "musdb-sample92.wav" #44.1 kHz
 
 new_file_path = test_dest / "new.wav"
 
+
 def test_init():
     wf = WaveObject.from_wave_file(light_path)
     print(len(wf.audio_data))
@@ -22,7 +25,7 @@ def test_init():
     print(str(wf))
     
 def test_display_waveform():
-    wf = WaveObject.from_wave_file(heavy_path)
+    wf = WaveObject.from_wave_file(light_path2)
     wf.display_waveform()
 
 def test_resample():
@@ -80,7 +83,7 @@ def test_display_spectogram():
 
 # test()
 
-# test_mix()
+test_mix()
 
 # test_play()
 
