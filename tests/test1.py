@@ -7,14 +7,6 @@ sys.path.insert(1, str(home / "sound-merge/src/sound_merge"))
 from merge import WaveObject
 import numpy as np
 
-light_path = music_dir_mixed / "music-fma-wa-0055.wav" #16 kHz
-light_path2 = music_dir_clean / "musdb-sample59.wav" #44.1 kHz
-
-heavy_path = music_dir_mixed / "music-fma-wa-0013.wav" #16 kHz
-heavy_path2 = music_dir_clean / "musdb-sample92.wav" #44.1 kHz
-
-new_file_path = test_dest / "new.wav"
-
 
 def test_init():
     wf = WaveObject.from_wave_file(light_path)
@@ -36,8 +28,8 @@ def test_resample():
 
 def test_concatenate():
     concatenate_path = test_dest / "concatenate.wav"
-    wf1 = WaveObject.from_wave_file(light_path)
-    wf2 = WaveObject.from_wave_file(heavy_path)
+    wf1 = WaveObject.from_wave_file(light_path2)
+    wf2 = WaveObject.from_wave_file(heavy_path2)
     # wf_long = wf1.concatenate(heavy_path)
     wf_long = WaveObject.concatenate(wf1, wf2)
 
@@ -73,7 +65,7 @@ def test_display_spectogram():
     wf1 = WaveObject.from_wave_file(light_path)
     wf1.display_spectogram()
 
-# test_concatenate()
+test_concatenate()
 
 # test_init()
 
@@ -83,7 +75,7 @@ def test_display_spectogram():
 
 # test()
 
-test_mix()
+# test_mix()
 
 # test_play()
 

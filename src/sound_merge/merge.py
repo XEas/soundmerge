@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from config import *
 
+
 class WaveObject:
     def __init__(self, audio_data, num_frames, num_channels=2, bytes_per_sample=2,
                  sample_rate=44100):
@@ -187,7 +188,7 @@ class WaveObject:
         except Exception as e:
             print(f"Failed to play audio: {e}")
     
-
+    #to be changed
     def change_volume(self, volume):
         audio_array = np.frombuffer(self.audio_data, dtype=np.int16).astype(np.float32) / 32768
         audio_array *= volume
@@ -221,7 +222,3 @@ class FlacObject:
         pass
 
 
-
-class Benchmark:
-    # 0.0-1.0 confidence level of that there is music in the background
-    pass

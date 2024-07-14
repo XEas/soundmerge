@@ -8,5 +8,17 @@ speech_dir = data_dir / "speech"
 
 test_dest = data_dir / "test_dest"
 
+test_data = home / "sound-merge/tests/data"
+
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+light_path = music_dir_mixed / "music-fma-wa-0055.wav" #16 kHz
+light_path2 = music_dir_clean / "musdb-sample59.wav" #44.1 kHz
+
+heavy_path = music_dir_mixed / "music-fma-wa-0013.wav" #16 kHz
+heavy_path2 = music_dir_clean / "musdb-sample92.wav" #44.1 kHz
+
+new_file_path = test_dest / "new.wav"
+
+
