@@ -61,19 +61,51 @@ class WaveObject:
         plt.ylabel('Amplitude')
         plt.show()
     
+
+    def display_waveform_from_audiosegment(audio_segment):
+        samples = np.array(audio_segment.get_array_of_samples())
+        
+        num_channels = audio_segment.channels
+        if num_channels == 2:
+            samples = samples.reshape(-1, 2).mean(axis=1)
+        
+        plt.figure(figsize=(10, 4))
+        plt.plot(samples)
+        plt.title('Wave File Plot')
+        plt.xlabel('Frame')
+        plt.ylabel('Amplitude')
+        plt.show()
+
     def display_spectogram(self):
         audio_data_np = self.audio_array
         if self.num_channels == 2:
             audio_data_np = (self.audio_array).reshape(-1, 2).mean(axis=1)
         f, t, Sxx = spectrogram(audio_data_np, self.sample_rate)
         plt.figure(figsize=(10, 4))
-        plt.pcolormesh(t, f, np.log10(Sxx), shading='gouraud')
+        plt.pcolormesh(t, f, 10 * np.log10(Sxx), shading='gouraud')
         plt.ylabel('Frequency [Hz]')
         plt.xlabel('Time [sec]')
         plt.title('Spectrogram')
         plt.colorbar(label='Intensity [dB]')
         plt.show()
 
+
+    def display_spectrogram_from_audiosegment(audio_segment):
+        samples = np.array(audio_segment.get_array_of_samples())
+        
+        num_channels = audio_segment.channels
+        if num_channels == 2:
+            samples = samples.reshape(-1, 2).mean(axis=1)
+        
+        f, t, Sxx = spectrogram(samples, audio_segment.frame_rate)
+        plt.figure(figsize=(10, 4))
+        plt.pcolormesh(t, f, 10 * np.log10(Sxx), shading='gouraud')
+        plt.ylabel('Frequency [Hz]')
+        plt.xlabel('Time [sec]')
+        plt.title('Spectrogram')
+        plt.colorbar(label='Intensity [dB]')
+        plt.show()
+        
     @staticmethod
     def comparability(wf1, wf2):
         if not (wf1.sample_rate == wf2.sample_rate and

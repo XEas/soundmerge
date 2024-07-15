@@ -2,3 +2,6 @@
 .venv
 .virtual_documents/
 .DS_Store
+tests/data/normalized_data/
+tests/data/normalized_headspace_data/
+tests/.DS_Store
