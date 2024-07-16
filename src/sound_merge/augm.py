@@ -27,4 +27,6 @@ def concatenate(audio_segment1, audio_segment2, crossfade_duration=0):
 def mix(audio_segment1, audio_segment2, crossfade_duration=0):
     return audio_segment1.overlay(audio_segment2, position=0, gain_during_overlay=-6, loop=False)
 
-# random audio segments
+def random_segment(audio_segment, length):
+    start = random.randint(0, len(audio_segment) - length)
+    return audio_segment[start:start + length]
