@@ -21,3 +21,5 @@ heavy_path = music_dir_mixed / "music-fma-wa-0013.wav" #16 kHz
 heavy_path2 = music_dir_clean / "musdb-sample92.wav" #44.1 kHz
 
 new_file_path = test_dest / "new.wav"
+
+benchmark_path = Path("/Volumes/Drive-1/audio-detection")
