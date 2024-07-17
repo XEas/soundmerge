@@ -1,9 +1,9 @@
 import sys
 import os
-from sound_merge.config import *
-sys.path.insert(1, str(home / "sound-merge/src/sound_merge"))
+sys.path.insert(1, str("/Users/glebmokeev/audio-projects/sound-merge/src/sound_merge"))
 
 
+from config import *
 from merge import WaveObject
 import numpy as np
 
@@ -40,6 +40,13 @@ def test_mix():
     wf1 = WaveObject.from_wave_file(light_path2)
     wf2 = WaveObject.from_wave_file(heavy_path2)
     wf_mixed = WaveObject.mix(wf1, wf2, 0.1, 1.5)
+    wf_mixed.save_to_file(mix_path)
+
+def test_mix_alt():
+    mix_path = test_dest / "mix.wav"
+    wf1 = WaveObject.from_wave_file(light_path2)
+    wf2 = WaveObject.from_wave_file(heavy_path2)
+    wf_mixed = WaveObject.mix_alt(wf1, wf2)
     wf_mixed.save_to_file(mix_path)
 
 def test():
@@ -84,3 +91,6 @@ test_concatenate()
 # test_frame_segment()
 
 # test_display_spectogram()
+
+
+test_mix_alt()

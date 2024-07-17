@@ -177,6 +177,21 @@ class WaveObject:
 
         return WaveObject(new_audio_data, new_num_frames, wave1.num_channels, wave1.bytes_per_sample, wave1.sample_rate)
 
+    @staticmethod
+    def mix_alt(wave1, wave2):
+        len1, len2 = len(wave1.audio_array), len(wave2.audio_array)
+        if len1 < len2:
+            wave1.audio_array = np.pad(wave1.audio_array, (0, len2 - len1), 'constant')
+        elif len2 < len1:
+            wave2.audio_array = np.pad(wave2.audio_array, (0, len1 - len2), 'constant')
+
+        mixed_array = np.zeros(len(wave1.audio_array))
+
+        for i in range(len(wave1.audio_array)):
+            mixed_array[i] = max(abs(wave1.audio_array[i]), abs(wave2.audio_array[i]))
+
+        return mixed_array
+
     def normalize():
         pass
 
