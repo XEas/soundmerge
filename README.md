@@ -5,7 +5,9 @@ Soundmerge is a powerful tool for creating audio benchmarks for background music
 ## Features
 
 - Supports WAV files
-- Customizable augmentations
+- Median normalization
+- Silence masks
+- Other customizable augmentations
 - Volume/clipping control
 
 
@@ -17,9 +19,13 @@ To install soundmerge, follow these steps:
 2. Navigate to the project directory: `cd soundmerge`
 3. Install poetry: `curl -sSL https://install.python-poetry.org | python3 -`
 4. Intall dependencies: `poetry install`
-4. Create a benchmark: `poetry run python src/sound_merge/benchmark.py`
+
+
+## Quick Start
+
+Create a benchmark: `poetry run python src/sound_merge/benchmark.py`
 
 
 ## License
 
-SoundMerge is released under the [MIT License](https://opensource.org/licenses/MIT). Feel free to use, modify, and distribute this repo.
+Soundmerge is released under the [MIT License](https://opensource.org/licenses/MIT). Feel free to use, modify, and distribute this repo.
