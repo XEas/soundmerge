@@ -16,16 +16,16 @@ def random_coefficient():
 def new_volume(sc1, sc2):
     random.choice([sc1, sc2])
 
-def mix(sc1, sc2, audio_segment1, audio_segment2):
+def mixture(sc1, sc2, audio_segment1, audio_segment2):
     enh1 = audio_segment1 - calculate_db_loss(sc1)
     enh2 = audio_segment2 - calculate_db_loss(sc2)
 
-    mixed_segment = enh1.overlay(enh2, position=0, loop=False)
+    mixed_segment = mix_overlay(enh1, enh2)
 
     return mixed_segment
 
 def choose_audio(path):
-    audio_files = list(path.glob('*.wav'))
+    audio_files = [file for file in path.glob('*.wav') if not file.name.startswith('._')]
     if audio_files:
         return random.choice(audio_files)
     else:
@@ -38,20 +38,19 @@ def new_audio():
     audio_1 = choose_audio(speech_dir)
     segment_1 = AudioSegment.from_file(audio_1)
 
-    audio_2 = choose_audio(music_dir_mixed)
+    audio_2 = choose_audio(music_dir_clean)
     segment_2 = AudioSegment.from_file(audio_2)
 
     k1 = random_coefficient()
     k2 = random_coefficient()
 
-    mixed_segment = mix(k1, k2, segment_1, segment_2)
+    mixed_segment = mixture(k1, k2, segment_1, segment_2)
 
     return mixed_segment
 
 
-
-for i in range(10):
-    new_audio().export(str(benchmark_path / 'b1' / f'mxied{i}.wav'), format='wav')
-
+if __name__ == '__main__':
+    for i in range(10):
+        new_audio().export(str(benchmark_path / 'b1' / f'mxied{i}.wav'), format='wav')
 
     

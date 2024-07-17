@@ -147,18 +147,7 @@ class WaveObject:
         return WaveObject(new_audio_data, new_num_frames, wave1.num_channels, wave1.bytes_per_sample, wave1.sample_rate)
 
     @staticmethod
-    def mix(wave1, wave2, volume1=1, volume2=1):
-        wave1 = WaveObject.ensure_wave_object(wave1)
-        if wave1 is None:
-            return None
-
-        wave2 = WaveObject.ensure_wave_object(wave2)
-        if wave2 is None:
-            return None
-        
-        if not (WaveObject.comparability(wave1, wave2)):
-            return None
-
+    def mix(wave1 : "WaveObject", wave2 : "WaveObject", volume1=1, volume2=1):
         len1, len2 = len(wave1.audio_array), len(wave2.audio_array)
 
         if len1 < len2:
