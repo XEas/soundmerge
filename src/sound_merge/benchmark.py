@@ -7,12 +7,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-"""Two directories of normalized sound files.
-    1. Randomly choose speech
-    2. Randomly choose background
-    3. Randomly choose two coefficients 0-1 for loudness                
-
-"""
 
 def random_coefficient():
     return random.random()
@@ -31,8 +25,7 @@ def choose_audio(path):
     audio_files = [file for file in path.glob('*.wav') if not file.name.startswith('._')]
     if audio_files:
         return random.choice(audio_files)
-    else:
-        return None
+    return None
 
 def calculate_db_loss(percent):
     return -10 * np.log10(percent)

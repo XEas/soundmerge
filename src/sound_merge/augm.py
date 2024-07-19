@@ -1,4 +1,4 @@
-from pydub import AudioSegment, effects
+from pydub import AudioSegment
 import random
 import numpy as np
 random.seed(42)
