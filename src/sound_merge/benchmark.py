@@ -6,7 +6,7 @@ from uniform import *
 import logging
 
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -34,11 +34,11 @@ def calculate_db_loss(percent):
     return -10 * np.log10(percent)
 
 
-def simple_benchmark(num, path, dir1, dir2):
+def simple_benchmark(num, path, dir1, dir2, progress_bar):
     dir1_norm = get_median_dBFS(dir1)
-    logging.info(f"Dir 1 median: {dir1_norm} dBFS\n")
+    logging.info(f"Dir 1 median: {dir1_norm} dBFS")
     dir2_norm = get_median_dBFS(dir2)
-    logging.info(f"Dir 2 median: {dir2_norm} dBFS\n")
+    logging.info(f"Dir 2 median: {dir2_norm} dBFS")
     for i in range(num):
         audio_1 = choose_audio(dir1)
         segment_1 = normalize_dBFS(audio_1, dir1_norm)
@@ -61,12 +61,16 @@ def simple_benchmark(num, path, dir1, dir2):
         k1 = random_coefficient()
         k2 = random_coefficient()
 
-        logging.info(f"Audio 1 coefficient: {k1} Audio 2 coefficient: {k2}\n")
+        logging.info(f"Audio 1 coefficient: {k1} Audio 2 coefficient: {k2}")
 
         mixed_segment = mixture(k1, k2, segment_1, segment_2)
         chosen_volume = random.choice([segment_1.dBFS, segment_2.dBFS])
         mixed_segment = mixed_segment.apply_gain(chosen_volume - mixed_segment.dBFS)
         mixed_segment.export(path / f"audio{i+1}.wav", format='wav')
+
+        progress = ((i + 1) / num) * 100
+        progress_bar['value'] = progress 
+        root.update_idletasks()
                            
 
 def select_directory(entry):
@@ -75,7 +79,7 @@ def select_directory(entry):
         entry.delete(0, tk.END)
         entry.insert(0, directory)
 
-def start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry):
+def start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry, progress_bar):
     try:
         num_files = int(num_files_entry.get())
         dir1 = Path(dir1_entry.get())
@@ -86,9 +90,11 @@ def start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry):
             messagebox.showerror("Error", "Please ensure all paths exist and the number of files is positive.")
             return
 
-        # Call your benchmark function here
-        # simple_benchmark(num_files, dest, dir1, dir2)
         messagebox.showinfo("Success", "Benchmark started. Check the console for progress.")
+
+        # Reset progress bar
+        progress_bar['value'] = 0
+        simple_benchmark(num_files, dest, dir1, dir2, progress_bar)
     except ValueError:
         messagebox.showerror("Error", "Please enter a valid number of files.")
 
@@ -116,6 +122,11 @@ if __name__ == '__main__':
     tk.Button(root, text="Browse", command=lambda: select_directory(dest_entry)).grid(row=3, column=2)
 
     tk.Button(root, text="Start Benchmark", command=lambda: start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry)).grid(row=4, column=0, columnspan=3)
+
+    progress_bar = ttk.Progressbar(root, orient=tk.HORIZONTAL, length=300, mode='determinate')
+    progress_bar.grid(row=5, column=0, columnspan=3, pady=10)
+
+    tk.Button(root, text="Start Benchmark", command=lambda: start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry, progress_bar)).grid(row=4, column=0, columnspan=3)
 
     root.mainloop()
     
