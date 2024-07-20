@@ -6,3 +6,4 @@ tests/normalized_data/
 tests/normalized_headspace_data/
 tests/.DS_Store
 .virtual_documents/
+notebooks/pd-script.ipynb

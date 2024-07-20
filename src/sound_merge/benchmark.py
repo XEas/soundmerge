@@ -34,11 +34,13 @@ def calculate_db_loss(percent):
     return -10 * np.log10(percent)
 
 
-def simple_benchmark(num, path, dir1, dir2, progress_bar):
-    dir1_norm = get_median_dBFS(dir1)
-    logging.info(f"Dir 1 median: {dir1_norm} dBFS")
-    dir2_norm = get_median_dBFS(dir2)
-    logging.info(f"Dir 2 median: {dir2_norm} dBFS")
+def simple_benchmark(num, path, dir1, dir2, p1, p2, progress_bar):
+    dir1_norm = get_percentile_dBFS(dir1, 0.95)
+    logging.info(f"Dir 2 {p1 * 100} percentile: {dir1_norm} dBFS)")
+
+    dir2_norm = get_percentile_dBFS(dir2, 0.95)
+    logging.info(f"Dir 2 {p2 * 100} percentile: {dir2_norm} dBFS)")
+
     for i in range(num):
         audio_1 = choose_audio(dir1)
         segment_1 = normalize_dBFS(audio_1, dir1_norm)
@@ -98,9 +100,24 @@ def start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry, progres
     except ValueError:
         messagebox.showerror("Error", "Please enter a valid number of files.")
 
+def validate_percentile(P):
+    """Validate the percentile entry to ensure it's between 0.0 and 1.0."""
+    try:
+        if P == "":
+            return True
+        val = float(P)
+        if 0.0 <= val <= 1.0:
+            return True
+        else:
+            return False
+    except ValueError:
+        return False
+
 if __name__ == '__main__':
     root = tk.Tk()
-    root.title("Audio Synthesis Benchmark")
+    root.title("soundmerge Benchmark")
+
+    vcmd = root.register(validate_percentile)
 
     tk.Label(root, text="Number of files:").grid(row=0, column=0)
     num_files_entry = tk.Entry(root)
@@ -119,14 +136,21 @@ if __name__ == '__main__':
     tk.Label(root, text="Destination Directory:").grid(row=3, column=0)
     dest_entry = tk.Entry(root)
     dest_entry.grid(row=3, column=1)
+
+    tk.Label(root, text="Percentile 1 (0.0-1.0):").grid(row=4, column=0)
+    percentile1_entry = tk.Entry(root, validate="key", validatecommand=(vcmd, '%P'))
+    percentile1_entry.grid(row=4, column=1)
+
+    tk.Label(root, text="Percentile 2 (0.0-1.0):").grid(row=5, column=0)
+    percentile2_entry = tk.Entry(root, validate="key", validatecommand=(vcmd, '%P'))
+    percentile2_entry.grid(row=5, column=1)
+
     tk.Button(root, text="Browse", command=lambda: select_directory(dest_entry)).grid(row=3, column=2)
 
-    tk.Button(root, text="Start Benchmark", command=lambda: start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry)).grid(row=4, column=0, columnspan=3)
+    tk.Button(root, text="Start Benchmark", command=lambda: start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry)).grid(row=6, column=0, columnspan=3)
 
     progress_bar = ttk.Progressbar(root, orient=tk.HORIZONTAL, length=300, mode='determinate')
-    progress_bar.grid(row=5, column=0, columnspan=3, pady=10)
-
-    tk.Button(root, text="Start Benchmark", command=lambda: start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry, progress_bar)).grid(row=4, column=0, columnspan=3)
+    progress_bar.grid(row=7, column=0, columnspan=3, pady=10)
 
     root.mainloop()
     
