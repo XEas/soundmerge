@@ -1,7 +1,9 @@
 from pydub import AudioSegment
 import random
 import numpy as np
-random.seed(42)
+
+import matplotlib.pyplot as plt
+from scipy.signal import spectrogram
 
 def random_silence_mask(audio_segment, total_silence_duration, silence_interval_duration=1000, fade_duration=200):
     total_silence_duration = min(total_silence_duration, len(audio_segment))
@@ -81,3 +83,33 @@ def mix_alt(audiosegment1, audiosegment2):
     )
 
     return mixed_audiosegment
+
+def display_spectrogram(audio_segment):
+        samples = np.array(audio_segment.get_array_of_samples())
+        
+        num_channels = audio_segment.channels
+        if num_channels == 2:
+            samples = samples.reshape(-1, 2).mean(axis=1)
+        
+        f, t, Sxx = spectrogram(samples, audio_segment.frame_rate)
+        plt.figure(figsize=(10, 4))
+        plt.pcolormesh(t, f, 10 * np.log10(Sxx), shading='gouraud')
+        plt.ylabel('Frequency [Hz]')
+        plt.xlabel('Time [sec]')
+        plt.title('Spectrogram')
+        plt.colorbar(label='Intensity [dB]')
+        plt.show()
+
+def display_waveform(audio_segment):
+        samples = np.array(audio_segment.get_array_of_samples())
+        
+        num_channels = audio_segment.channels
+        if num_channels == 2:
+            samples = samples.reshape(-1, 2).mean(axis=1)
+        
+        plt.figure(figsize=(10, 4))
+        plt.plot(samples)
+        plt.title('Wave File Plot')
+        plt.xlabel('Frame')
+        plt.ylabel('Amplitude')
+        plt.show()
