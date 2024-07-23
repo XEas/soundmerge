@@ -5,6 +5,7 @@ def main(benchmark):
     dynamic_select_layout(benchmark)
 
 def run():
+    src = []
     simple_benchmark(10, '/Users/glebmokeev/audio-projects/data/bchm', '/Users/glebmokeev/audio-projects/data/speech', '/Users/glebmokeev/audio-projects/data/music-clean', 0.95, 0.95, 'normal')
 
 if __name__ == "__main__":
