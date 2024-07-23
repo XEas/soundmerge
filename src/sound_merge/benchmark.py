@@ -11,6 +11,14 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def random_coefficient():
     return random.random()
 
+def choose_volume(coefs : list, distr: str):
+    if distr == 'uniform':
+        return random.choice(coefs)
+    elif distr == 'normal':
+        return np.average(np.array(coefs))
+    
+    raise ValueError("Distribution type must be 'uniform' or 'normal'") 
+    
 def new_volume(sc1, sc2):
     random.choice([sc1, sc2])
 
@@ -70,3 +78,9 @@ def simple_benchmark(num, path, dir1, dir2, p1, p2, progress_bar):
         progress = ((i + 1) / num) * 100
         progress_bar['value'] = progress 
         root.update_idletasks()
+
+
+def dynamic_select_benchmark(num, dirs, p, progress_bar):
+    for i in range(num):
+        pass
+    
