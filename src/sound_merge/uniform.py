@@ -1,6 +1,7 @@
 """Intended to create a directory of sound files with uniform loudness."""
 from pydub import AudioSegment
 import os
+from pathlib import Path
 
 def get_median_dBFS(path):
     """Calculates the median dBFS value of all .wav files in the given directory."""
