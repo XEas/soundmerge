@@ -91,20 +91,20 @@ def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, perc
         logging.info(f"Dir {i+1} norm: {dir_norms[i]} dBFS")
 
     for i in range(num):
-        canvas = AudioSegment.silent(duration=10000)
+        canvas = AudioSegment.silent(duration=duration)
         logging.info(f"---------New Audio {i+1}---------")
 
         for j in range(len(dirs)):
             audio = choose_audio(dirs[j])
             segment = normalize_dBFS(audio, dir_norms[j])
 
-            # if len(segment) > duration:
-            #     segment = random_segment(segment, duration)
+            if len(segment) > duration:
+                segment = random_segment(segment, duration)
             
-            # while len(segment) < duration:
-            #     extra_audio = choose_audio(dirs[j])
-            #     extra_segment = normalize_dBFS(extra_audio, dir_norms[j])
-            #     segment = concatenate(segment, extra_segment, crossfade_duration=300)
+            while len(segment) < duration:
+                extra_audio = choose_audio(dirs[j])
+                extra_segment = normalize_dBFS(extra_audio, dir_norms[j])
+                segment = concatenate(segment, extra_segment, crossfade_duration=100)
 
             sc = random_coefficient()
             segment = segment - calculate_db_loss(sc)

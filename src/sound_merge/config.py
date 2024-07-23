@@ -23,3 +23,5 @@ heavy_path2 = music_dir_clean / "musdb-sample92.wav" #44.1 kHz
 new_file_path = test_dest / "new.wav"
 
 benchmark_path = Path("/Volumes/Drive-1/music-detection")
+
+placeholder = test_data / "placeholder.wav"
