@@ -12,6 +12,7 @@ def random_coefficient() -> float:
     return random.random()
 
 def choose_volume(coefs : list, distr: str) -> float:
+    coefs = [value for value in coefs if value > -np.inf]
     if distr == 'uniform':
         return random.choice(coefs)
     elif distr == 'normal':
@@ -90,7 +91,7 @@ def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, perc
         logging.info(f"Dir {i+1} norm: {dir_norms[i]} dBFS")
 
     for i in range(num):
-        canvas = AudioSegment.silent(duration=duration)
+        canvas = AudioSegment.silent(duration=10000)
         logging.info(f"---------New Audio {i+1}---------")
 
         for j in range(len(dirs)):
@@ -106,17 +107,15 @@ def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, perc
             #     segment = concatenate(segment, extra_segment, crossfade_duration=300)
 
             sc = random_coefficient()
-            enh = segment - calculate_db_loss(sc)
-            logging.info(f"Segment {j+1} coefficient: {sc} volume: {segment.dBFS} dBFS")
+            segment = segment - calculate_db_loss(sc)
+            logging.info(f"Segment {j+1} coefficient: {sc} Volume: {segment.dBFS} dBFS")
 
-            mixed_segment = mix_overlay(canvas, enh)
-            logging.info(f"Mixed volume: {mixed_segment.dBFS} dBFS Canvas volume: {canvas.dBFS} dBFS")
+            mixed_segment = mix_overlay(canvas, segment)
 
             chosen_volume = choose_volume([canvas.dBFS, segment.dBFS], distr)
             mixed_segment = mixed_segment.apply_gain(chosen_volume - mixed_segment.dBFS)
-
+            
             canvas = mixed_segment
-            logging.info(f"Canvas volume: {canvas.dBFS} dBFS")
             
         
         logging.info(f"Final volume: {canvas.dBFS} dBFS")
