@@ -43,7 +43,7 @@ def start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry, perceti
     except ValueError:
         messagebox.showerror("Error", "Please enter a valid number of files.")
 
-def layout(benchmark):
+def simple_layout(benchmark):
     root.title("soundmerge Benchmark")
 
     vcmd = root.register(validate_percentile)
@@ -80,5 +80,58 @@ def layout(benchmark):
 
     progress_bar = ttk.Progressbar(root, orient=tk.HORIZONTAL, length=300, mode='determinate')
     progress_bar.grid(row=7, column=0, columnspan=3, pady=10)
+
+    root.mainloop()
+
+def dynamic_select_layout(benchmark):
+    root.title("Dynamic soundmerge Benchmark")
+    directories = []  # List to store directory entries
+
+    def add_directory():
+        """Add a new directory entry field with a browse button."""
+        row = len(directories) + 2
+        tk.Label(root, text=f"Source Directory {len(directories)+1}:").grid(row=row, column=0)
+        dir_entry = tk.Entry(root)
+        dir_entry.grid(row=row, column=1)
+        tk.Button(root, text="Browse", command=lambda: select_directory(dir_entry)).grid(row=row, column=2)
+        directories.append(dir_entry)  # Add the new entry to the list
+
+        # Move the 'Add Directory' button to the next row
+        add_dir_button.grid(row=row+1, column=0, columnspan=5)
+
+    # Initial layout setup
+    tk.Label(root, text="Number of files:").grid(row=0, column=0)
+    num_files_entry = tk.Entry(root)
+    num_files_entry.grid(row=0, column=1)
+
+    tk.Label(root, text="Destination Directory:").grid(row=1, column=0)
+    dest_entry = tk.Entry(root)
+    dest_entry.grid(row=1, column=1)
+    tk.Button(root, text="Browse", command=lambda: select_directory(dest_entry)).grid(row=1, column=2)
+
+    # 'Add Directory' button setup
+    add_dir_button = tk.Button(root, text="Add Directory", command=add_directory)
+    add_dir_button.grid(row=2, column=0, columnspan=3)
+
+    # Placeholder for percentile entries and validation, similar to simple_layout
+    # ...
+
+    # Adjust the start benchmark function or create a new one to handle dynamic directories
+    def start_dynamic_benchmark():
+        try:
+            num_files = int(num_files_entry.get())
+            dest = Path(dest_entry.get())
+            dirs = [Path(entry.get()) for entry in directories]
+            # Validate directories and num_files here
+            messagebox.showinfo("Success", "Benchmark started. Check the console for progress.")
+            # Call benchmark function with dynamic directories
+            # benchmark(num_files, dest, dirs, ...)
+        except ValueError:
+            messagebox.showerror("Error", "Please enter a valid number of files.")
+
+    tk.Button(root, text="Start Benchmark", command=start_dynamic_benchmark).grid(row=len(directories) + 20, column=0, columnspan=3)
+
+    progress_bar = ttk.Progressbar(root, orient=tk.HORIZONTAL, length=300, mode='determinate')
+    progress_bar.grid(row=len(directories) + 21, column=0, columnspan=3, pady=10)
 
     root.mainloop()
