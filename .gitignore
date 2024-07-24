@@ -7,3 +7,4 @@ tests/normalized_headspace_data/
 tests/.DS_Store
 .virtual_documents/
 notebooks/pd-script.ipynb
+src/sound_merge/merge.py

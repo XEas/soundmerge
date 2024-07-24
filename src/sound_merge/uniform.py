@@ -1,8 +1,9 @@
 """Intended to create a directory of sound files with uniform loudness."""
 from pydub import AudioSegment
 import os
+from pathlib import Path
 
-def get_median_dBFS(path):
+def get_median_dBFS(path : Path) -> float:
     """Calculates the median dBFS value of all .wav files in the given directory."""
     dBFS_values = []
     for filename in path.iterdir():
@@ -15,7 +16,7 @@ def get_median_dBFS(path):
     
     return median
 
-def get_percentile_dBFS(path, percentile):
+def get_percentile_dBFS(path : Path, percentile : float) -> float:
     """Calculates the specified quantile dBFS value of all .wav files in the given directory."""
     dBFS_values = []
     for filename in path.iterdir():
@@ -32,7 +33,7 @@ def get_percentile_dBFS(path, percentile):
     
     return percentile_value
 
-def normalize_dBFS(path, target_dBFS):
+def normalize_dBFS(path, target_dBFS ):
         audio = AudioSegment.from_file(str(path), format="wav")
         audio = audio.apply_gain(target_dBFS - audio.dBFS)
         

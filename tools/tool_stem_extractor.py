@@ -15,7 +15,9 @@ def extract_stems(stem_file, output_dir):
         stempeg.write_audio(str(output_path), data[i], sample_rate, codec="pcm_s16le")
 
 
-def process_stems(stem_dir : Path, i = 1, files_failed = 0):
+def process_stems(stem_dir : Path, output_dir : Path):
+    files_failed = 0
+    i = 1
     for item in stem_dir.iterdir():
         if item.is_file():
                 try:
@@ -31,10 +33,11 @@ def process_stems(stem_dir : Path, i = 1, files_failed = 0):
                         stem_4 = AudioSegment.from_wav(os.path.join(output_dir, "stem_4.wav"))
                         combined_sound = stem_2 + stem_3 + stem_4
                             
-                        output_file = music_dir_clean / filename_new
+                        output_file = output_dir / filename_new
                         combined_sound.export(output_file, format="wav")
         
                         i+=1
+                        logging.info(f"Extracted file {i-1}: {item.name}")
                 except shutil.Error as e:
                         logger.ERROR(f"Error {files_failed} extracting file: {e}")
                         files_failed += 1
@@ -43,4 +46,4 @@ def process_stems(stem_dir : Path, i = 1, files_failed = 0):
 
 stem_dir = dataset_dir / "musdb18"
 
-process_stems(stem_dir)
+process_stems(stem_dir, output_dir=Path("/Volumes/Drive-1/musdb-converted"))

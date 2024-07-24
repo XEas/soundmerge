@@ -1,9 +1,14 @@
 from pydub import AudioSegment
 import random
 import numpy as np
-random.seed(42)
 
-def random_silence_mask(audio_segment, total_silence_duration, silence_interval_duration=1000, fade_duration=200):
+import matplotlib.pyplot as plt
+from scipy.signal import spectrogram
+
+def random_silence_mask(audio_segment, total_silence_duration, silence_interval_duration, fade_duration):
+    """
+    Randomly masks audio_segment with silence intervals of specified lenght
+    """
     total_silence_duration = min(total_silence_duration, len(audio_segment))
     num_intervals = total_silence_duration // silence_interval_duration
 
@@ -21,13 +26,16 @@ def random_silence_mask(audio_segment, total_silence_duration, silence_interval_
     return modified_audio
 
 
-def concatenate(audio_segment1, audio_segment2, crossfade_duration=0):
+def concatenate(audio_segment1: AudioSegment, audio_segment2: AudioSegment, crossfade_duration=0) -> AudioSegment:
     return audio_segment1.append(audio_segment2, crossfade=crossfade_duration)
 
 def mix_overlay(audio_segment1, audio_segment2, position=0, loop=False):
     return audio_segment1.overlay(audio_segment2, position=position, loop=loop)
 
-def mix(audio_segment1, audio_segment2):
+def mix(audio_segment1: AudioSegment, audio_segment2: AudioSegment) -> AudioSegment:
+    """
+    Mixes two audio segments by adding them and normalizing by dividing by the max value
+    """
     samples1 = np.array(audio_segment1.get_array_of_samples(), dtype=np.float32) / audio_segment1.max_possible_amplitude
     samples2 = np.array(audio_segment2.get_array_of_samples(), dtype=np.float32) / audio_segment2.max_possible_amplitude
 
@@ -44,6 +52,7 @@ def mix(audio_segment1, audio_segment2):
 
     mixed_samples *= audio_segment1.max_possible_amplitude
 
+    # create a new audio segment from the mixed samples
     mixed_audio_segment = AudioSegment(
         data=mixed_samples.astype(np.int16).tobytes(),
         sample_width=audio_segment1.sample_width,
@@ -53,12 +62,18 @@ def mix(audio_segment1, audio_segment2):
 
     return mixed_audio_segment
 
-def random_segment(audio_segment, length):
+def random_segment(audio_segment: AudioSegment, length: int) -> AudioSegment:
+    """
+    Cuts out a random segment of the given length from the audio segment
+    """
     start = random.randint(0, len(audio_segment) - length)
     return audio_segment[start:start + length]
 
 
-def mix_alt(audiosegment1, audiosegment2):
+def mix_alt(audiosegment1: AudioSegment, audiosegment2: AudioSegment) -> AudioSegment:
+    """
+    Mixes two audio segments by taking the sample that has the highest amplitude at each point
+    """
     samples1 = np.array(audiosegment1.get_array_of_samples())
     samples2 = np.array(audiosegment2.get_array_of_samples())
     
@@ -81,3 +96,39 @@ def mix_alt(audiosegment1, audiosegment2):
     )
 
     return mixed_audiosegment
+
+def display_spectrogram(audio_segment: AudioSegment):
+        """
+        Displays the spectrogram of the audio segment
+        """
+        samples = np.array(audio_segment.get_array_of_samples())
+        
+        num_channels = audio_segment.channels
+        if num_channels == 2:
+            samples = samples.reshape(-1, 2).mean(axis=1)
+        
+        f, t, Sxx = spectrogram(samples, audio_segment.frame_rate)
+        plt.figure(figsize=(10, 4))
+        plt.pcolormesh(t, f, 10 * np.log10(Sxx), shading='gouraud')
+        plt.ylabel('Frequency [Hz]')
+        plt.xlabel('Time [sec]')
+        plt.title('Spectrogram')
+        plt.colorbar(label='Intensity [dB]')
+        plt.show()
+
+def display_waveform(audio_segment: AudioSegment):
+        """
+        Displays the waveform of the audio segment
+        """
+        samples = np.array(audio_segment.get_array_of_samples())
+        
+        num_channels = audio_segment.channels
+        if num_channels == 2:
+            samples = samples.reshape(-1, 2).mean(axis=1)
+        
+        plt.figure(figsize=(10, 4))
+        plt.plot(samples)
+        plt.title('Wave File Plot')
+        plt.xlabel('Frame')
+        plt.ylabel('Amplitude')
+        plt.show()
