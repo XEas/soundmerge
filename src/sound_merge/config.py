@@ -24,4 +24,4 @@ new_file_path = test_dest / "new.wav"
 
 benchmark_path = Path("/Volumes/Drive-1/music-detection")
 
-placeholder = test_data / "placeholder.wav"
+dest = test_data / "placeholder.wav"

@@ -1,3 +1,6 @@
+"""
+This module provides a simple GUI for the soundmerge benchmarking tool.
+"""
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
@@ -37,7 +40,6 @@ def start_benchmark(num_files_entry, dir1_entry, dir2_entry, dest_entry, perceti
 
         messagebox.showinfo("Success", "Benchmark started. Check the console for progress.")
 
-        # Reset progress bar
         progress_bar['value'] = 0
         benchmark(num_files, dest, dir1, dir2, p1, p2, progress_bar)
     except ValueError:
@@ -85,7 +87,7 @@ def simple_layout(benchmark):
 
 def dynamic_select_layout(benchmark):
     root.title("Dynamic soundmerge Benchmark")
-    directories = []  # List to store directory entries
+    directories = []
 
     def add_directory():
         """Add a new directory entry field with a browse button."""
@@ -94,9 +96,8 @@ def dynamic_select_layout(benchmark):
         dir_entry = tk.Entry(root)
         dir_entry.grid(row=row, column=1)
         tk.Button(root, text="Browse", command=lambda: select_directory(dir_entry)).grid(row=row, column=2)
-        directories.append(dir_entry)  # Add the new entry to the list
+        directories.append(dir_entry)
 
-        # Move the 'Add Directory' button to the next row
         add_dir_button.grid(row=row+1, column=0, columnspan=5)
 
     # Initial layout setup
@@ -109,23 +110,15 @@ def dynamic_select_layout(benchmark):
     dest_entry.grid(row=1, column=1)
     tk.Button(root, text="Browse", command=lambda: select_directory(dest_entry)).grid(row=1, column=2)
 
-    # 'Add Directory' button setup
     add_dir_button = tk.Button(root, text="Add Directory", command=add_directory)
     add_dir_button.grid(row=2, column=0, columnspan=3)
 
-    # Placeholder for percentile entries and validation, similar to simple_layout
-    # ...
-
-    # Adjust the start benchmark function or create a new one to handle dynamic directories
     def start_dynamic_benchmark():
         try:
             num_files = int(num_files_entry.get())
             dest = Path(dest_entry.get())
             dirs = [Path(entry.get()) for entry in directories]
-            # Validate directories and num_files here
             messagebox.showinfo("Success", "Benchmark started. Check the console for progress.")
-            # Call benchmark function with dynamic directories
-            # benchmark(num_files, dest, dirs, ...)
         except ValueError:
             messagebox.showerror("Error", "Please enter a valid number of files.")
 
