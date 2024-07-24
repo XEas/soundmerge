@@ -96,6 +96,7 @@ def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, perc
 
         for j in range(len(dirs)):
             audio = choose_audio(dirs[j])
+            logging.info(f"Chosen audio: {audio.name}")
             segment = normalize_dBFS(audio, dir_norms[j])
 
             if len(segment) > duration:
