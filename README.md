@@ -5,11 +5,12 @@ Soundmerge is a powerful tool for creating audio benchmarks for background music
 ## Features
 
 - Supports WAV files
-- Median normalization
+- Percentile normalization
 - Silence masks
 - Other customizable augmentations
 - Volume/clipping control
-- Multiple Directories
+- Allows for multiple Directories
+- GUI
 
 
 ## Installation
@@ -24,7 +25,9 @@ To install soundmerge, follow these steps:
 
 ## Quick Start
 
-Create a benchmark: `poetry run python src/sound_merge/main.py `
+Create a benchmark: 
+1. `poetry shell`
+2. `poetry run python src/sound_merge/main.py `
 To use with GUI, in `main.py` change `run()` to `main()`
 
 
