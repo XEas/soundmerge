@@ -1,14 +1,15 @@
 import random
-from augm import *
 import numpy as np
-from uniform import *
 import logging
-from benchmark_gui import root
 from typing import Union
+from pathlib import Path
+from pydub import AudioSegment
+from augm import mix_overlay, random_segment, concatenate
+from uniform import get_percentile_dBFS, normalize_dBFS
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-pathlike = Union[str, Path]
+pathLike = Union[str, Path]
 
 def random_coefficient() -> float:
     """
@@ -28,17 +29,7 @@ def choose_volume(coefs : list, distr: str) -> float:
     
     raise ValueError("Distribution type must be 'uniform' or 'normal'") 
 
-def mixture(sc1 : float, sc2 : float, audio_segment1 : AudioSegment, audio_segment2 : AudioSegment) -> AudioSegment:
-    """
-    Mixes two audio segments with given coefficients
-    """
-    enh1 = audio_segment1 - calculate_db_loss(sc1)
-    enh2 = audio_segment2 - calculate_db_loss(sc2)
-    mixed_segment = mix_overlay(enh1, enh2)
-
-    return mixed_segment
-
-def choose_audio(path : Path) -> Path:
+def choose_audio(path : Path):
     """
     Chooses a random audio file from the given directory
     """
@@ -47,35 +38,36 @@ def choose_audio(path : Path) -> Path:
         return random.choice(audio_files)
     return None
 
-def calculate_db_loss(percent : float):
+def calculate_db_loss(percent : float) -> float:
     """
     Calculates the dB loss from the given percentage
     """
     return -10 * np.log10(percent)
 
 
-def dynamic_select_benchmark(num : int, dest: Path, dirs: list[Path], percentiles: list[float], distribution : str, duration: float, progress_bar=None):
+def dynamic_select_benchmark(audio_file_count : int, destination_directory: Path, source_directories: list[Path], percentiles: list[float], distribution : str, duration: float, progress_bar=None):
     """
     Creates a testing benchmark with the given number of audio files, multiple directories, percentiles, distribution type
     """
-    dir_norms = [get_percentile_dBFS(dir, percentile) for dir, percentile in zip(dirs, percentiles)]
+    dir_norms = [get_percentile_dBFS(dir, percentile) for dir, percentile in zip(source_directories, percentiles)]
     for i in range(len(dir_norms)):
         logging.info(f"Dir {i+1} norm: {dir_norms[i]} dBFS")
 
-    for i in range(num):
+    duration_ms = duration * 1000
+    for i in range(audio_file_count):
         # literally a canvas to put audio on
-        canvas = AudioSegment.silent(duration=duration)
+        canvas = AudioSegment.silent(duration=duration_ms)
         logging.info(f"---------New Audio {i+1}---------")
 
-        for j, path in enumerate(dirs):
+        for j, path in enumerate(source_directories):
             audio = choose_audio(path=path)
             logging.info(f"Chosen audio: {audio.name}")
             segment = normalize_dBFS(audio, dir_norms[j])
 
-            if len(segment) > duration:
-                segment = random_segment(segment, duration)
+            if len(segment) > duration_ms:
+                segment = random_segment(segment, duration_ms)
             
-            while len(segment) < duration:
+            while len(segment) < duration_ms:
                 extra_audio = choose_audio(path)
                 extra_segment = normalize_dBFS(extra_audio, dir_norms[j])
                 segment = concatenate(segment, extra_segment, crossfade_duration=100)
@@ -93,7 +85,7 @@ def dynamic_select_benchmark(num : int, dest: Path, dirs: list[Path], percentile
             
         
         logging.info(f"Final volume: {canvas.dBFS} dBFS")
-        mixed_segment.export(dest / f"audio{i+1}.wav", format='wav')
+        mixed_segment.export(destination_directory / f"audio{i+1}.wav", format='wav')
         
         # # progress bar used in GUI
         # if progress_bar:

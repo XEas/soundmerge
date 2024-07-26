@@ -26,10 +26,10 @@ def random_silence_mask(audio_segment, total_silence_duration, silence_interval_
     return modified_audio
 
 
-def concatenate(audio_segment1: AudioSegment, audio_segment2: AudioSegment, crossfade_duration=0) -> AudioSegment:
+def concatenate(audio_segment1: AudioSegment, audio_segment2: AudioSegment, crossfade_duration: int = 0) -> AudioSegment:
     return audio_segment1.append(audio_segment2, crossfade=crossfade_duration)
 
-def mix_overlay(audio_segment1, audio_segment2, position=0, loop=False):
+def mix_overlay(audio_segment1, audio_segment2, position: int = 0, loop: bool = False) -> AudioSegment:
     return audio_segment1.overlay(audio_segment2, position=position, loop=loop)
 
 def mix(audio_segment1: AudioSegment, audio_segment2: AudioSegment) -> AudioSegment:
@@ -62,12 +62,12 @@ def mix(audio_segment1: AudioSegment, audio_segment2: AudioSegment) -> AudioSegm
 
     return mixed_audio_segment
 
-def random_segment(audio_segment: AudioSegment, length: int) -> AudioSegment:
+def random_segment(audio_segment: AudioSegment, length_ms: float) -> AudioSegment:
     """
-    Cuts out a random segment of the given length from the audio segment
+    Cuts out a random segment of the given length in miliseconds from the audio segment
     """
-    start = random.randint(0, len(audio_segment) - length)
-    return audio_segment[start:start + length]
+    start = random.randint(0, len(audio_segment) - length_ms)
+    return audio_segment[start:(start + length_ms)]
 
 
 def mix_alt(audiosegment1: AudioSegment, audiosegment2: AudioSegment) -> AudioSegment:
