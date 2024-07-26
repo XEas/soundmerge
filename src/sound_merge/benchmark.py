@@ -3,10 +3,12 @@ from augm import *
 import numpy as np
 from uniform import *
 import logging
-
 from benchmark_gui import root
+from typing import Union
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+pathlike = Union[str, Path]
 
 def random_coefficient() -> float:
     """
@@ -52,62 +54,10 @@ def calculate_db_loss(percent : float):
     return -10 * np.log10(percent)
 
 
-def simple_benchmark(num: int, dest: str | Path, dir1: str | Path, dir2: str | Path, percentile1: int, percentile2: int, distr: str, progress_bar=None) -> None:
-    """
-    Creates a testing(!!) benchmark with the given number of audio files, two directories, percentiles, distribution type
-    """
-    dest, dir1, dir2 = Path(dest), Path(dir1), Path(dir2)
-
-    dir1_norm = get_percentile_dBFS(dir1, percentile1)
-    logging.info(f"Dir 1 {percentile1 * 100} percentile: {dir1_norm} dBFS")
-
-    dir2_norm = get_percentile_dBFS(dir2, percentile2)
-    logging.info(f"Dir 2 {percentile2 * 100} percentile: {dir2_norm} dBFS")
-
-    for i in range(num):
-        logging.info(f"---------New Audio {i+1}---------")
-        audio_1 = choose_audio(dir1)
-        segment_1 = normalize_dBFS(audio_1, dir1_norm)
-
-        if len(segment_1) > 15000:
-            segment_1 = random_segment(segment_1, 15000)
-        
-        while len(segment_1) < 15000:
-            extra_audio = choose_audio(dir1)
-            extra_segment = normalize_dBFS(extra_audio, dir1_norm)
-            segment_1 = concatenate(segment_1, extra_segment, crossfade_duration=300)
-        
-
-        audio_2 = choose_audio(dir2)
-        segment_2 = normalize_dBFS(audio_2, dir2_norm)
-
-        if len(segment_2) > 10000:
-            segment_2 = random_silence_mask(segment_2, total_silence_duration=3000, fade_duration=300)
-
-        k1 = random_coefficient()
-        k2 = random_coefficient()
-
-        logging.info(f"Segment 1 coefficient: {k1} Segment 2 coefficient: {k2}")
-
-        mixed_segment = mixture(k1, k2, segment_1, segment_2)
-        chosen_volume = choose_volume([segment_1.dBFS, segment_2.dBFS], distr)
-        logging.info(f"Final volume: {chosen_volume}")
-        mixed_segment = mixed_segment.apply_gain(chosen_volume - mixed_segment.dBFS)
-        mixed_segment.export(dest / f"audio{i+1}.wav", format='wav')
-
-        # progress bar used in GUI
-        if progress_bar:
-            progress = ((i + 1) / num) * 100
-            progress_bar['value'] = progress 
-            root.update_idletasks()
-
-
-def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, percentiles: list, distr : str, duration: float, progress_bar=None):
+def dynamic_select_benchmark(num : int, dest: Path, dirs: list[Path], percentiles: list[float], distribution : str, duration: float, progress_bar=None):
     """
     Creates a testing benchmark with the given number of audio files, multiple directories, percentiles, distribution type
     """
-    dirs, dest = [Path(str_path) for str_path in dirs], Path(dest)
-
     dir_norms = [get_percentile_dBFS(dir, percentile) for dir, percentile in zip(dirs, percentiles)]
     for i in range(len(dir_norms)):
         logging.info(f"Dir {i+1} norm: {dir_norms[i]} dBFS")
@@ -117,8 +67,8 @@ def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, perc
         canvas = AudioSegment.silent(duration=duration)
         logging.info(f"---------New Audio {i+1}---------")
 
-        for j in range(len(dirs)):
-            audio = choose_audio(dirs[j])
+        for j, path in enumerate(dirs):
+            audio = choose_audio(path=path)
             logging.info(f"Chosen audio: {audio.name}")
             segment = normalize_dBFS(audio, dir_norms[j])
 
@@ -126,7 +76,7 @@ def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, perc
                 segment = random_segment(segment, duration)
             
             while len(segment) < duration:
-                extra_audio = choose_audio(dirs[j])
+                extra_audio = choose_audio(path)
                 extra_segment = normalize_dBFS(extra_audio, dir_norms[j])
                 segment = concatenate(segment, extra_segment, crossfade_duration=100)
 
@@ -136,7 +86,7 @@ def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, perc
 
             mixed_segment = mix_overlay(canvas, segment)
 
-            chosen_volume = choose_volume([canvas.dBFS, segment.dBFS], distr)
+            chosen_volume = choose_volume([canvas.dBFS, segment.dBFS], distribution)
             mixed_segment = mixed_segment.apply_gain(chosen_volume - mixed_segment.dBFS)
             
             canvas = mixed_segment
@@ -145,8 +95,8 @@ def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, perc
         logging.info(f"Final volume: {canvas.dBFS} dBFS")
         mixed_segment.export(dest / f"audio{i+1}.wav", format='wav')
         
-        # progress bar used in GUI
-        if progress_bar:
-            progress = ((i + 1) / num) * 100
-            progress_bar['value'] = progress 
-            root.update_idletasks()
+        # # progress bar used in GUI
+        # if progress_bar:
+        #     progress = ((i + 1) / num) * 100
+        #     progress_bar['value'] = progress 
+        #     root.update_idletasks()

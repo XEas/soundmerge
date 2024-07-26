@@ -33,8 +33,8 @@ def get_percentile_dBFS(path : Path, percentile : float) -> float:
     
     return percentile_value
 
-def normalize_dBFS(path, target_dBFS ):
-        audio = AudioSegment.from_file(str(path), format="wav")
+def normalize_dBFS(path: Path, target_dBFS: float) -> AudioSegment:
+        audio = AudioSegment.from_file(path, format="wav")
         audio = audio.apply_gain(target_dBFS - audio.dBFS)
         
         return audio
