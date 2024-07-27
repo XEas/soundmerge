@@ -4,15 +4,15 @@ import logging
 from typing import Union, Iterable, List
 from pathlib import Path
 from pydub import AudioSegment
-from augm import mix_overlay, random_segment, concatenate
-from uniform import get_percentile_dBFS, normalize_dBFS, normalize_segment_dBFS
+from augm import mix_overlay, random_segment
+from uniform import normalize_segment_dBFS
 from mutagen.wave import WAVE
 from callables import GenAudioFile
 from loguru import logger
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-pathLike = Union[str, Path]
+PathLike = Union[str, Path]
 
 def random_coefficient() -> float:
     """
@@ -27,7 +27,7 @@ def choose_volume(coefs : list, distr: str) -> float:
     coefs = [value for value in coefs if value > -np.inf]
     if distr == 'uniform':
         return random.choice(coefs)
-    elif distr == 'normal':
+    if distr == 'normal':
         return np.average(np.array(coefs))
     
     raise ValueError("Distribution type must be 'uniform' or 'normal'") 
@@ -40,7 +40,7 @@ def calculate_db_loss(percent : float) -> float:
         raise ValueError("Percent must be between 0 and 1.")
     if percent == 0:
         raise ValueError("Percent of 0 indicates infinite dB loss, which is not representable.")
-    elif percent == 1:
+    if percent == 1:
         return 0
     return -10 * np.log10(percent)
 
@@ -60,14 +60,6 @@ def filter_out_short_audio(audio_files: list[Path], duration_s: float) -> list[P
     if len(filtered) == 0:
         raise ValueError("No audio files are long enough")
     return filtered
-
-def choose_audio_from_files(audio_files : List[Path]) -> Path:
-    """
-    Chooses a random audio file from the given files
-    """
-    if audio_files:
-        return random.choice(audio_files)
-    return None
 
 def mixture(sc1 : float, sc2 : float, audio_segment1 : AudioSegment, audio_segment2 : AudioSegment) -> AudioSegment:
     """
@@ -90,7 +82,7 @@ def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
     for directory in source_directories:
         clean_files = take_clean_audio(audio_directory=directory)
         approp_files = filter_out_short_audio(audio_files=clean_files, duration_s=1)
-        chosen_file = choose_audio_from_files(audio_files=approp_files)
+        chosen_file = random.choice(approp_files)
         files.append(chosen_file)
         logger.info(f"Chosen audio file: {chosen_file}")
     return files
