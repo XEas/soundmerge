@@ -62,7 +62,7 @@ def mix(audio_segment1: AudioSegment, audio_segment2: AudioSegment) -> AudioSegm
 
     return mixed_audio_segment
 
-def random_segment(audio_segment: AudioSegment, length_ms: float) -> AudioSegment:
+def random_segment(audio_segment: AudioSegment, length_ms: int) -> AudioSegment:
     """
     Cuts out a random segment of the given length in miliseconds from the audio segment
     """

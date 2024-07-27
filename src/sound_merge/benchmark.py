@@ -1,11 +1,12 @@
 import random
 import numpy as np
 import logging
-from typing import Union
+from typing import Union, Iterable
 from pathlib import Path
 from pydub import AudioSegment
 from augm import mix_overlay, random_segment, concatenate
 from uniform import get_percentile_dBFS, normalize_dBFS
+from loguru import logger
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -40,55 +41,50 @@ def choose_audio(path : Path):
 
 def calculate_db_loss(percent : float) -> float:
     """
-    Calculates the dB loss from the given percentage
+    Calculates the dB loss from the given percentage.
     """
+    if not 0 <= percent <= 1:
+        raise ValueError("Percent must be between 0 and 1.")
+    if percent == 0:
+        raise ValueError("Percent of 0 indicates infinite dB loss, which is not representable.")
+    elif percent == 1:
+        return 0
     return -10 * np.log10(percent)
 
-
-def dynamic_select_benchmark(audio_file_count : int, destination_directory: Path, source_directories: list[Path], percentiles: list[float], distribution : str, duration: float, progress_bar=None):
+@logger.catch
+def dynamic_select_benchmark(audio_file_count : int, destination_directory: Path, source_directories: Iterable[Path], percentiles: Iterable[float], distribution : str, duration: float):
     """
     Creates a testing benchmark with the given number of audio files, multiple directories, percentiles, distribution type
     """
-    dir_norms = [get_percentile_dBFS(dir, percentile) for dir, percentile in zip(source_directories, percentiles)]
-    for i in range(len(dir_norms)):
-        logging.info(f"Dir {i+1} norm: {dir_norms[i]} dBFS")
+    percentile_norms = [get_percentile_dBFS(path=dir, percentile=percentile) for dir, percentile in zip(source_directories, percentiles)]
 
-    duration_ms = duration * 1000
+    duration_ms = int(duration * 1000)
     for i in range(audio_file_count):
+        logger.info(f"Audio #{i+1} generation started")
         # literally a canvas to put audio on
         canvas = AudioSegment.silent(duration=duration_ms)
-        logging.info(f"---------New Audio {i+1}---------")
-
         for j, path in enumerate(source_directories):
-            audio = choose_audio(path=path)
-            logging.info(f"Chosen audio: {audio.name}")
-            segment = normalize_dBFS(audio, dir_norms[j])
+            chosen_audio_path = choose_audio(path=path)
+            logger.info(f"Chosen audio: {chosen_audio_path.name}")
+            segment = normalize_dBFS(path=chosen_audio_path, target_dBFS=percentile_norms[j])
 
             if len(segment) > duration_ms:
-                segment = random_segment(segment, duration_ms)
-            
+                segment = random_segment(audio_segment=segment, length_ms=duration_ms)
             while len(segment) < duration_ms:
-                extra_audio = choose_audio(path)
-                extra_segment = normalize_dBFS(extra_audio, dir_norms[j])
-                segment = concatenate(segment, extra_segment, crossfade_duration=100)
+                extra_chosen_audio_path = choose_audio(path)
+                extra_segment = normalize_dBFS(path=extra_chosen_audio_path, target_dBFS=percentile_norms[j])
+                segment = concatenate(audio_segment1=segment, audio_segment2=extra_segment, crossfade_duration=100)
 
             sc = random_coefficient()
             segment = segment - calculate_db_loss(sc)
-            logging.info(f"Segment {j+1} coefficient: {sc} Volume: {segment.dBFS} dBFS")
+            logger.info(f"Segment {j+1} coefficient: {sc} Volume: {segment.dBFS} dBFS")
 
             mixed_segment = mix_overlay(canvas, segment)
 
-            chosen_volume = choose_volume([canvas.dBFS, segment.dBFS], distribution)
-            mixed_segment = mixed_segment.apply_gain(chosen_volume - mixed_segment.dBFS)
+            chosen_volume = choose_volume(coefs=[canvas.dBFS, segment.dBFS], distr=distribution)
+            mixed_segment = mixed_segment.apply_gain(volume_change=(chosen_volume - mixed_segment.dBFS))
             
             canvas = mixed_segment
             
-        
-        logging.info(f"Final volume: {canvas.dBFS} dBFS")
+        logger.info(f"Final volume: {canvas.dBFS} dBFS")
         mixed_segment.export(destination_directory / f"audio{i+1}.wav", format='wav')
-        
-        # # progress bar used in GUI
-        # if progress_bar:
-        #     progress = ((i + 1) / num) * 100
-        #     progress_bar['value'] = progress 
-        #     root.update_idletasks()

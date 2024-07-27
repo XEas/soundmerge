@@ -2,6 +2,7 @@
 from pydub import AudioSegment
 import os
 from pathlib import Path
+from loguru import logger
 
 def get_median_dBFS(path : Path) -> float:
     """Calculates the median dBFS value of all .wav files in the given directory."""
@@ -31,6 +32,8 @@ def get_percentile_dBFS(path : Path, percentile : float) -> float:
     
     percentile_value = sorted(dBFS_values)[index]
     
+    logger.info(f"Percentile dBFS value: {percentile_value}")
+
     return percentile_value
 
 def normalize_dBFS(path: Path, target_dBFS: float) -> AudioSegment:

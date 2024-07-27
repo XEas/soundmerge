@@ -16,6 +16,8 @@ scipy = "^1.14.0"
 matplotlib = "^3.9.0"
 torchaudio = "^2.3.1"
 pylint = "^3.2.6"
+mypy = "^1.11.0"
+loguru = "^0.7.2"
 
 
 [tool.poetry.group.dev.dependencies]
