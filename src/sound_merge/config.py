@@ -1,5 +1,6 @@
-from pathlib import Path
 import logging
+from pathlib import Path
+
 home = Path("/Users/glebmokeev/audio-projects")
 data_dir = home / "data"
 music_dir_clean = data_dir / "music-clean"

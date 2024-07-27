@@ -1,10 +1,12 @@
 """
 This module contains callable classes that are used to generate audio segments
 """
-from typing import Any, Callable
 from pathlib import Path
-from pydub import AudioSegment
+from typing import Any, Callable
+
 from loguru import logger
+from pydub import AudioSegment
+
 
 class GenAudioFile:
     """

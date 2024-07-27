@@ -1,9 +1,10 @@
-from pydub import AudioSegment
 import random
-import numpy as np
 
 import matplotlib.pyplot as plt
+import numpy as np
+from pydub import AudioSegment
 from scipy.signal import spectrogram
+
 
 def random_silence_mask(audio_segment, total_silence_duration, silence_interval_duration, fade_duration):
     """

@@ -8,15 +8,12 @@ packages = [{include = "sound_merge", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-logging = "^0.4.9.6"
 pydub = "^0.25.1"
 stempeg = "^0.2.3"
 numpy = "1.26.4"
 scipy = "^1.14.0"
 matplotlib = "^3.9.0"
 torchaudio = "^2.3.1"
-pylint = "^3.2.6"
-mypy = "^1.11.0"
 loguru = "^0.7.2"
 mutagen = "^1.47.0"
 pytest = "^8.3.2"

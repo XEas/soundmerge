@@ -1,14 +1,16 @@
-import random
-import numpy as np
 import logging
-from typing import Union, Iterable, List
+import random
 from pathlib import Path
-from pydub import AudioSegment
-from augm import mix_overlay, random_segment
-from uniform import normalize_segment_dBFS
-from mutagen.wave import WAVE
+from typing import Iterable, List, Union
+
+import numpy as np
 from callables import GenAudioFile
 from loguru import logger
+from mutagen.wave import WAVE
+from pydub import AudioSegment
+
+from .augm import mix_overlay, random_segment
+from .uniform import normalize_segment_dBFS
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -102,5 +104,6 @@ def bench(source_directories: list[Path], destination_directory: Path, audio_fil
 
     for i in range(audio_file_count):
         mixed_segment = gen_audio(target_dBFS=-14, length_s=1)
-        mixed_segment.export(destination_directory / f"audio{i}.wav", format="wav")
-        logger.info(f"Generated mixed file No.{i+1} saved to: {destination_directory / f"audio{i}.wav"}")
+        dest_file = destination_directory / f"audio{i}.wav"
+        mixed_segment.export(dest_file, format="wav")
+        logger.info(f"Generated mixed file No.{i+1} saved to: {dest_file}")

@@ -1,7 +1,9 @@
-from benchmark_gui import dynamic_select_layout
-from benchmark import bench
 from pathlib import Path
+
 import config
+from benchmark import bench
+from benchmark_gui import dynamic_select_layout
+
 
 def main(benchmark):
     dynamic_select_layout(benchmark)

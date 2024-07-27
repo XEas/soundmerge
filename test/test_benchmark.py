@@ -1,8 +1,11 @@
 """Tests for the benchmark module."""
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import pytest
+
 from sound_merge import benchmark
+
 
 def test_random_coefficient_range():
     """Test if random_coefficient returns a value between 0 and 1."""

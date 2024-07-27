@@ -2,8 +2,8 @@
 This module provides a simple GUI for the soundmerge benchmarking tool.
 """
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 
 root = tk.Tk()
 
