@@ -89,7 +89,7 @@ def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
         logger.info(f"Chosen audio file: {chosen_file}")
     return files
 
-def bench(source_directories: list[Path], destination_directory: Path, audio_file_count: int):
+def produce_benchmark(source_directories: list[Path], destination_directory: Path, audio_file_count: int):
     """
     Benchmark function to test the dynamic selection of audio files
     """
