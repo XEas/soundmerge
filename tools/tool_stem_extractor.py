@@ -1,9 +1,11 @@
-import shutil
 import os
-from pydub import AudioSegment
-import stempeg
+import shutil
 from pathlib import Path
+
+import stempeg
+from pydub import AudioSegment
 from tool_config import *
+
 
 def extract_stems(stem_file, output_dir):
     data, sample_rate = stempeg.read_stems(stem_file)

@@ -1,10 +1,12 @@
-import tarfile
+import logging
 import os
 import shutil
+import tarfile
 import zipfile
-import logging
 from pathlib import Path
+
 from tool_config import *
+
 
 # unpack .tar.gz archive
 def unpack_tar(archive_path, dest_path):

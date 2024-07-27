@@ -1,9 +1,10 @@
-from pydub import AudioSegment
 import random
-import numpy as np
 
 import matplotlib.pyplot as plt
+import numpy as np
+from pydub import AudioSegment
 from scipy.signal import spectrogram
+
 
 def random_silence_mask(audio_segment, total_silence_duration, silence_interval_duration, fade_duration):
     """
@@ -26,11 +27,12 @@ def random_silence_mask(audio_segment, total_silence_duration, silence_interval_
     return modified_audio
 
 
-def concatenate(audio_segment1: AudioSegment, audio_segment2: AudioSegment, crossfade_duration=0) -> AudioSegment:
+def concatenate(audio_segment1: AudioSegment, audio_segment2: AudioSegment, crossfade_duration: int = 0) -> AudioSegment:
     return audio_segment1.append(audio_segment2, crossfade=crossfade_duration)
 
-def mix_overlay(audio_segment1, audio_segment2, position=0, loop=False):
+def mix_overlay(audio_segment1: AudioSegment, audio_segment2: AudioSegment, position: int = 0, loop: bool = False, **kwargs) -> AudioSegment:
     return audio_segment1.overlay(audio_segment2, position=position, loop=loop)
+
 
 def mix(audio_segment1: AudioSegment, audio_segment2: AudioSegment) -> AudioSegment:
     """
@@ -62,40 +64,13 @@ def mix(audio_segment1: AudioSegment, audio_segment2: AudioSegment) -> AudioSegm
 
     return mixed_audio_segment
 
-def random_segment(audio_segment: AudioSegment, length: int) -> AudioSegment:
+def random_segment(audio_segment: AudioSegment, length_s: float, **kwargs) -> AudioSegment:
     """
-    Cuts out a random segment of the given length from the audio segment
+    Cuts out a random segment of the given length in miliseconds from the audio segment
     """
-    start = random.randint(0, len(audio_segment) - length)
-    return audio_segment[start:start + length]
-
-
-def mix_alt(audiosegment1: AudioSegment, audiosegment2: AudioSegment) -> AudioSegment:
-    """
-    Mixes two audio segments by taking the sample that has the highest amplitude at each point
-    """
-    samples1 = np.array(audiosegment1.get_array_of_samples())
-    samples2 = np.array(audiosegment2.get_array_of_samples())
-    
-    if len(samples1) < len(samples2):
-        samples2 = samples2[:len(samples1)]
-
-    mixed_array = np.zeros(len(samples1))
-
-    for i in range(len(samples1)):
-        if abs(samples1[i]) > abs(samples2[i]):
-            mixed_array[i] = samples1[i]
-        else:
-            mixed_array[i] = samples2[i]
-
-    mixed_audiosegment = AudioSegment(
-        data=mixed_array.astype(np.int16).tobytes(),
-        sample_width=audiosegment1.sample_width,
-        frame_rate=audiosegment1.frame_rate,
-        channels=audiosegment1.channels
-    )
-
-    return mixed_audiosegment
+    length_ms = int(1000 * length_s)
+    start = random.randint(0, len(audio_segment) - length_ms)
+    return audio_segment[start:(start + length_ms)]
 
 def display_spectrogram(audio_segment: AudioSegment):
         """

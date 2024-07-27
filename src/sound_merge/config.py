@@ -1,5 +1,6 @@
-from pathlib import Path
 import logging
+from pathlib import Path
+
 home = Path("/Users/glebmokeev/audio-projects")
 data_dir = home / "data"
 music_dir_clean = data_dir / "music-clean"
@@ -25,3 +26,6 @@ new_file_path = test_dest / "new.wav"
 benchmark_path = Path("/Volumes/Drive-1/music-detection")
 
 dest = test_data / "placeholder.wav"
+
+music_detection = Path("/Volumes/Drive-1/music-detection")
+

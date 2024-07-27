@@ -1,12 +1,20 @@
-import random
-from augm import *
-import numpy as np
-from uniform import *
 import logging
+import random
+from pathlib import Path
+from typing import Iterable, List, Union
 
-from benchmark_gui import root
+import numpy as np
+from callables import GenAudioFile
+from loguru import logger
+from mutagen.wave import WAVE
+from pydub import AudioSegment
+
+from .augm import mix_overlay, random_segment
+from .uniform import normalize_segment_dBFS
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+PathLike = Union[str, Path]
 
 def random_coefficient() -> float:
     """
@@ -21,10 +29,39 @@ def choose_volume(coefs : list, distr: str) -> float:
     coefs = [value for value in coefs if value > -np.inf]
     if distr == 'uniform':
         return random.choice(coefs)
-    elif distr == 'normal':
+    if distr == 'normal':
         return np.average(np.array(coefs))
     
     raise ValueError("Distribution type must be 'uniform' or 'normal'") 
+
+def calculate_db_loss(percent : float) -> float:
+    """
+    Calculates the dB loss from the given percentage.
+    """
+    if not 0 <= percent <= 1:
+        raise ValueError("Percent must be between 0 and 1.")
+    if percent == 0:
+        raise ValueError("Percent of 0 indicates infinite dB loss, which is not representable.")
+    if percent == 1:
+        return 0
+    return -10 * np.log10(percent)
+
+def take_clean_audio(audio_directory : Path) -> list[Path]:
+    """
+    Cleans the audio files from hidden files
+    """
+    clean_files = [file for file in audio_directory.glob('*.wav') if not file.name.startswith('._')] # ignore hidden files
+
+    return clean_files
+
+def filter_out_short_audio(audio_files: list[Path], duration_s: float) -> list[Path]:
+    """
+    Filters out audio files that are shorter than the given duration using mutagen
+    """
+    filtered = [audio for audio in audio_files if audio and WAVE(audio).info.length >= duration_s]
+    if len(filtered) == 0:
+        raise ValueError("No audio files are long enough")
+    return filtered
 
 def mixture(sc1 : float, sc2 : float, audio_segment1 : AudioSegment, audio_segment2 : AudioSegment) -> AudioSegment:
     """
@@ -36,117 +73,37 @@ def mixture(sc1 : float, sc2 : float, audio_segment1 : AudioSegment, audio_segme
 
     return mixed_segment
 
-def choose_audio(path : Path) -> Path:
+@logger.catch
+def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
     """
-    Chooses a random audio file from the given directory
+    Generates source audio files from the given directories - one from each directory
+    returns:
+    list of paths to the chosen audio files
     """
-    audio_files = [file for file in path.glob('*.wav') if not file.name.startswith('._')] #ignore hidden files
-    if audio_files:
-        return random.choice(audio_files)
-    return None
+    files = []
+    for directory in source_directories:
+        clean_files = take_clean_audio(audio_directory=directory)
+        approp_files = filter_out_short_audio(audio_files=clean_files, duration_s=1)
+        chosen_file = random.choice(approp_files)
+        files.append(chosen_file)
+        logger.info(f"Chosen audio file: {chosen_file}")
+    return files
 
-def calculate_db_loss(percent : float):
+def bench(source_directories: list[Path], destination_directory: Path, audio_file_count: int):
     """
-    Calculates the dB loss from the given percentage
+    Benchmark function to test the dynamic selection of audio files
     """
-    return -10 * np.log10(percent)
+    source_files = generate_source_audio(source_directories=source_directories)
+    gen_audio = GenAudioFile(
+        audio_files=source_files,
+        mix_func=mixture,
+        norm_func=normalize_segment_dBFS,
+        augm_funcs=[random_segment, normalize_segment_dBFS],
+        final_dBFS=-14
+    )
 
-
-def simple_benchmark(num: int, dest: str | Path, dir1: str | Path, dir2: str | Path, percentile1: int, percentile2: int, distr: str, progress_bar=None) -> None:
-    """
-    Creates a testing(!!) benchmark with the given number of audio files, two directories, percentiles, distribution type
-    """
-    dest, dir1, dir2 = Path(dest), Path(dir1), Path(dir2)
-
-    dir1_norm = get_percentile_dBFS(dir1, percentile1)
-    logging.info(f"Dir 1 {percentile1 * 100} percentile: {dir1_norm} dBFS")
-
-    dir2_norm = get_percentile_dBFS(dir2, percentile2)
-    logging.info(f"Dir 2 {percentile2 * 100} percentile: {dir2_norm} dBFS")
-
-    for i in range(num):
-        logging.info(f"---------New Audio {i+1}---------")
-        audio_1 = choose_audio(dir1)
-        segment_1 = normalize_dBFS(audio_1, dir1_norm)
-
-        if len(segment_1) > 15000:
-            segment_1 = random_segment(segment_1, 15000)
-        
-        while len(segment_1) < 15000:
-            extra_audio = choose_audio(dir1)
-            extra_segment = normalize_dBFS(extra_audio, dir1_norm)
-            segment_1 = concatenate(segment_1, extra_segment, crossfade_duration=300)
-        
-
-        audio_2 = choose_audio(dir2)
-        segment_2 = normalize_dBFS(audio_2, dir2_norm)
-
-        if len(segment_2) > 10000:
-            segment_2 = random_silence_mask(segment_2, total_silence_duration=3000, fade_duration=300)
-
-        k1 = random_coefficient()
-        k2 = random_coefficient()
-
-        logging.info(f"Segment 1 coefficient: {k1} Segment 2 coefficient: {k2}")
-
-        mixed_segment = mixture(k1, k2, segment_1, segment_2)
-        chosen_volume = choose_volume([segment_1.dBFS, segment_2.dBFS], distr)
-        logging.info(f"Final volume: {chosen_volume}")
-        mixed_segment = mixed_segment.apply_gain(chosen_volume - mixed_segment.dBFS)
-        mixed_segment.export(dest / f"audio{i+1}.wav", format='wav')
-
-        # progress bar used in GUI
-        if progress_bar:
-            progress = ((i + 1) / num) * 100
-            progress_bar['value'] = progress 
-            root.update_idletasks()
-
-
-def dynamic_select_benchmark(num : int, dest: str | Path, dirs: str | Path, percentiles: list, distr : str, duration: float, progress_bar=None):
-    """
-    Creates a testing benchmark with the given number of audio files, multiple directories, percentiles, distribution type
-    """
-    dirs, dest = [Path(str_path) for str_path in dirs], Path(dest)
-
-    dir_norms = [get_percentile_dBFS(dir, percentile) for dir, percentile in zip(dirs, percentiles)]
-    for i in range(len(dir_norms)):
-        logging.info(f"Dir {i+1} norm: {dir_norms[i]} dBFS")
-
-    for i in range(num):
-        # literally a canvas to put audio on
-        canvas = AudioSegment.silent(duration=duration)
-        logging.info(f"---------New Audio {i+1}---------")
-
-        for j in range(len(dirs)):
-            audio = choose_audio(dirs[j])
-            logging.info(f"Chosen audio: {audio.name}")
-            segment = normalize_dBFS(audio, dir_norms[j])
-
-            if len(segment) > duration:
-                segment = random_segment(segment, duration)
-            
-            while len(segment) < duration:
-                extra_audio = choose_audio(dirs[j])
-                extra_segment = normalize_dBFS(extra_audio, dir_norms[j])
-                segment = concatenate(segment, extra_segment, crossfade_duration=100)
-
-            sc = random_coefficient()
-            segment = segment - calculate_db_loss(sc)
-            logging.info(f"Segment {j+1} coefficient: {sc} Volume: {segment.dBFS} dBFS")
-
-            mixed_segment = mix_overlay(canvas, segment)
-
-            chosen_volume = choose_volume([canvas.dBFS, segment.dBFS], distr)
-            mixed_segment = mixed_segment.apply_gain(chosen_volume - mixed_segment.dBFS)
-            
-            canvas = mixed_segment
-            
-        
-        logging.info(f"Final volume: {canvas.dBFS} dBFS")
-        mixed_segment.export(dest / f"audio{i+1}.wav", format='wav')
-        
-        # progress bar used in GUI
-        if progress_bar:
-            progress = ((i + 1) / num) * 100
-            progress_bar['value'] = progress 
-            root.update_idletasks()
+    for i in range(audio_file_count):
+        mixed_segment = gen_audio(target_dBFS=-14, length_s=1)
+        dest_file = destination_directory / f"audio{i}.wav"
+        mixed_segment.export(dest_file, format="wav")
+        logger.info(f"Generated mixed file No.{i+1} saved to: {dest_file}")
