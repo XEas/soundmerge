@@ -61,13 +61,19 @@ def dynamic_select_benchmark(audio_file_count : int, destination_directory: Path
     duration_ms = int(duration * 1000)
     for i in range(audio_file_count):
         logger.info(f"Audio #{i+1} generation started")
-        # literally a canvas to put audio on
-        canvas = AudioSegment.silent(duration=duration_ms)
+        # choose audio files from each directory to mix
+        segments_to_mix = []
         for j, path in enumerate(source_directories):
             chosen_audio_path = choose_audio(path=path)
             logger.info(f"Chosen audio: {chosen_audio_path.name}")
             segment = normalize_dBFS(path=chosen_audio_path, target_dBFS=percentile_norms[j])
+            segments_to_mix.append(segment)
 
+        # mix chosen audio files
+        # literally a canvas to put audio on
+        canvas = AudioSegment.silent(duration=duration_ms)
+        for j, path in enumerate(source_directories):
+            segment = segments_to_mix[j]
             if len(segment) > duration_ms:
                 segment = random_segment(audio_segment=segment, length_ms=duration_ms)
             while len(segment) < duration_ms:
