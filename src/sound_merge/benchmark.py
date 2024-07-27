@@ -5,7 +5,7 @@ from typing import Union, Iterable
 from pathlib import Path
 from pydub import AudioSegment
 from augm import mix_overlay, random_segment, concatenate
-from uniform import get_percentile_dBFS, normalize_dBFS
+from uniform import get_percentile_dBFS, normalize_dBFS, normalize_segment_dBFS
 from mutagen.wave import WAVE
 from callables import GenAudioFile
 from loguru import logger
@@ -80,6 +80,7 @@ def mixture(sc1 : float, sc2 : float, audio_segment1 : AudioSegment, audio_segme
 
     return mixed_segment
 
+@logger.catch
 def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
     """
     Generates source audio files from the given directories - one from each directory
@@ -92,6 +93,7 @@ def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
         approp_files = filter_out_short_audio(audio_files=clean_files, duration_ms=1000)
         chosen_file = choose_audio_from_files(audio_files=approp_files)
         files.append(chosen_file)
+        logger.info(f"Chosen audio file: {chosen_file}")
     return files
 
 def bench(source_directories: list[Path], destination_directory: Path, audio_file_count: int):
@@ -101,14 +103,14 @@ def bench(source_directories: list[Path], destination_directory: Path, audio_fil
     source_files = generate_source_audio(source_directories=source_directories)
     gen_audio = GenAudioFile(
         audio_files=source_files,
-        mix_func=mix_overlay,
-        norm_func=normalize_dBFS,
+        mix_func=mixture,
+        norm_func=normalize_segment_dBFS,
         augm_funcs=[random_segment],
         final_dBFS=-14
     )
 
     for i in range(audio_file_count):
-        mixed_segment = gen_audio(target_dBFS=-14)
-        mixed_segment.export(destination_directory, format="wav")
-        logger.info(f"Generated mixed file No.{i+1} saved to: {destination_directory}")
+        mixed_segment = gen_audio(target_dBFS=-14, length_ms=1000)
+        mixed_segment.export(destination_directory / f"audio{i}.wav", format="wav")
+        logger.info(f"Generated mixed file No.{i+1} saved to: {destination_directory / f"audio{i}.wav"}")
 

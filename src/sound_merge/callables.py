@@ -18,20 +18,16 @@ class GenAudioFile:
         self.norm_func = norm_func
         self.mix_func = mix_func
         self.final_dBFS = final_dBFS
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         processed_segments = []
         for audio_file in self.audio_files:
             segment = AudioSegment.from_file(audio_file)
             for func in self.augm_funcs:
-                segment = func(segment, *kwds)
+                segment = func(segment, **kwargs)
             processed_segments.append(segment)
         
         mixed_segment = processed_segments[0]
         for segment in processed_segments:
-            mixed_segment = self.mix_func(segment, mixed_segment)
-            mixed_segment = self.norm_func(mixed_segment, self.final_dBFS)
+            mixed_segment = self.mix_func(sc1=0.5, sc2=0.5, audio_segment1=segment, audio_segment2=mixed_segment)
+            mixed_segment = self.norm_func(segment=mixed_segment, target_dBFS=self.final_dBFS)
         return mixed_segment
-
-    
-    
-    
