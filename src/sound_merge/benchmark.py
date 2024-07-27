@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import logging
-from typing import Union, Iterable
+from typing import Union, Iterable, List
 from pathlib import Path
 from pydub import AudioSegment
 from augm import mix_overlay, random_segment, concatenate
@@ -52,17 +52,16 @@ def take_clean_audio(audio_directory : Path) -> list[Path]:
 
     return clean_files
 
-def filter_out_short_audio(audio_files: list[Path], duration_ms: int) -> list[Path]:
+def filter_out_short_audio(audio_files: list[Path], duration_s: float) -> list[Path]:
     """
     Filters out audio files that are shorter than the given duration using mutagen
     """
-    duration_s = duration_ms / 1000  # Convert milliseconds to seconds for comparison
-    filtered = [audio for audio in audio_files if WAVE(audio).info.length >= duration_s]
+    filtered = [audio for audio in audio_files if audio and WAVE(audio).info.length >= duration_s]
     if len(filtered) == 0:
         raise ValueError("No audio files are long enough")
     return filtered
 
-def choose_audio_from_files(audio_files : Iterable[Path]) -> Path:
+def choose_audio_from_files(audio_files : List[Path]) -> Path:
     """
     Chooses a random audio file from the given files
     """
@@ -90,7 +89,7 @@ def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
     files = []
     for directory in source_directories:
         clean_files = take_clean_audio(audio_directory=directory)
-        approp_files = filter_out_short_audio(audio_files=clean_files, duration_ms=1000)
+        approp_files = filter_out_short_audio(audio_files=clean_files, duration_s=1)
         chosen_file = choose_audio_from_files(audio_files=approp_files)
         files.append(chosen_file)
         logger.info(f"Chosen audio file: {chosen_file}")
@@ -105,7 +104,7 @@ def bench(source_directories: list[Path], destination_directory: Path, audio_fil
         audio_files=source_files,
         mix_func=mixture,
         norm_func=normalize_segment_dBFS,
-        augm_funcs=[random_segment],
+        augm_funcs=[random_segment, normalize_segment_dBFS],
         final_dBFS=-14
     )
 
@@ -113,4 +112,3 @@ def bench(source_directories: list[Path], destination_directory: Path, audio_fil
         mixed_segment = gen_audio(target_dBFS=-14, length_ms=1000)
         mixed_segment.export(destination_directory / f"audio{i}.wav", format="wav")
         logger.info(f"Generated mixed file No.{i+1} saved to: {destination_directory / f"audio{i}.wav"}")
-

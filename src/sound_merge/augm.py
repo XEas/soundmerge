@@ -29,7 +29,7 @@ def random_silence_mask(audio_segment, total_silence_duration, silence_interval_
 def concatenate(audio_segment1: AudioSegment, audio_segment2: AudioSegment, crossfade_duration: int = 0) -> AudioSegment:
     return audio_segment1.append(audio_segment2, crossfade=crossfade_duration)
 
-def mix_overlay(audio_segment1, audio_segment2, position: int = 0, loop: bool = False) -> AudioSegment:
+def mix_overlay(audio_segment1: AudioSegment, audio_segment2: AudioSegment, position: int = 0, loop: bool = False, **kwargs) -> AudioSegment:
     return audio_segment1.overlay(audio_segment2, position=position, loop=loop)
 
 
