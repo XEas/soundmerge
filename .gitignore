@@ -31,3 +31,5 @@ archive.zip
 
 # repo assets
 *.wav
+
+notebooks/pd-script.ipynb
