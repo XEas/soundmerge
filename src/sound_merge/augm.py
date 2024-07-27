@@ -32,6 +32,7 @@ def concatenate(audio_segment1: AudioSegment, audio_segment2: AudioSegment, cros
 def mix_overlay(audio_segment1, audio_segment2, position: int = 0, loop: bool = False) -> AudioSegment:
     return audio_segment1.overlay(audio_segment2, position=position, loop=loop)
 
+
 def mix(audio_segment1: AudioSegment, audio_segment2: AudioSegment) -> AudioSegment:
     """
     Mixes two audio segments by adding them and normalizing by dividing by the max value
