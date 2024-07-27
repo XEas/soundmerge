@@ -1,5 +1,4 @@
 """Intended to create a directory of sound files with uniform loudness."""
-import os
 from pathlib import Path
 
 from loguru import logger

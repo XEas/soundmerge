@@ -1,6 +1,4 @@
 """Tests for the benchmark module."""
-import tempfile
-from pathlib import Path
 
 import pytest
 

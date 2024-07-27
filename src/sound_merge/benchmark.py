@@ -1,7 +1,7 @@
 import logging
 import random
 from pathlib import Path
-from typing import Iterable, List, Union
+from typing import Iterable, Union
 
 import numpy as np
 from callables import GenAudioFile

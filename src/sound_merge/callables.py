@@ -4,7 +4,6 @@ This module contains callable classes that are used to generate audio segments
 from pathlib import Path
 from typing import Any, Callable
 
-from loguru import logger
 from pydub import AudioSegment
 
 
