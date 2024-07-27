@@ -9,3 +9,4 @@ tests/.DS_Store
 notebooks/pd-script.ipynb
 src/sound_merge/merge.py
 .mypy_cache/
+test/data/

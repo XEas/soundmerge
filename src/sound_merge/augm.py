@@ -63,40 +63,13 @@ def mix(audio_segment1: AudioSegment, audio_segment2: AudioSegment) -> AudioSegm
 
     return mixed_audio_segment
 
-def random_segment(audio_segment: AudioSegment, length_ms: int, **kwargs) -> AudioSegment:
+def random_segment(audio_segment: AudioSegment, length_s: float, **kwargs) -> AudioSegment:
     """
     Cuts out a random segment of the given length in miliseconds from the audio segment
     """
+    length_ms = int(1000 * length_s)
     start = random.randint(0, len(audio_segment) - length_ms)
     return audio_segment[start:(start + length_ms)]
-
-
-def mix_alt(audiosegment1: AudioSegment, audiosegment2: AudioSegment) -> AudioSegment:
-    """
-    Mixes two audio segments by taking the sample that has the highest amplitude at each point
-    """
-    samples1 = np.array(audiosegment1.get_array_of_samples())
-    samples2 = np.array(audiosegment2.get_array_of_samples())
-    
-    if len(samples1) < len(samples2):
-        samples2 = samples2[:len(samples1)]
-
-    mixed_array = np.zeros(len(samples1))
-
-    for i in range(len(samples1)):
-        if abs(samples1[i]) > abs(samples2[i]):
-            mixed_array[i] = samples1[i]
-        else:
-            mixed_array[i] = samples2[i]
-
-    mixed_audiosegment = AudioSegment(
-        data=mixed_array.astype(np.int16).tobytes(),
-        sample_width=audiosegment1.sample_width,
-        frame_rate=audiosegment1.frame_rate,
-        channels=audiosegment1.channels
-    )
-
-    return mixed_audiosegment
 
 def display_spectrogram(audio_segment: AudioSegment):
         """

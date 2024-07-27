@@ -109,6 +109,6 @@ def bench(source_directories: list[Path], destination_directory: Path, audio_fil
     )
 
     for i in range(audio_file_count):
-        mixed_segment = gen_audio(target_dBFS=-14, length_ms=1000)
+        mixed_segment = gen_audio(target_dBFS=-14, length_s=1)
         mixed_segment.export(destination_directory / f"audio{i}.wav", format="wav")
         logger.info(f"Generated mixed file No.{i+1} saved to: {destination_directory / f"audio{i}.wav"}")
