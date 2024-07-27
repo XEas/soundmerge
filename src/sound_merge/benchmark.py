@@ -30,15 +30,6 @@ def choose_volume(coefs : list, distr: str) -> float:
     
     raise ValueError("Distribution type must be 'uniform' or 'normal'") 
 
-def choose_audio(path : Path):
-    """
-    Chooses a random audio file from the given directory
-    """
-    audio_files = [file for file in path.glob('*.wav') if not file.name.startswith('._')] #ignore hidden files
-    if audio_files:
-        return random.choice(audio_files)
-    return None
-
 def calculate_db_loss(percent : float) -> float:
     """
     Calculates the dB loss from the given percentage.
@@ -50,6 +41,44 @@ def calculate_db_loss(percent : float) -> float:
     elif percent == 1:
         return 0
     return -10 * np.log10(percent)
+
+def take_clean_audio(audio_directory : Path) -> list[Path]:
+    """
+    Cleans the audio files from hidden files
+    """
+    clean_files = [file for file in audio_directory.glob('*.wav') if not file.name.startswith('._')] # ignore hidden files
+
+    return clean_files
+
+def filter_out_short_audio(audio_files : Path, duration_ms : int) -> list[Path]:
+    """
+    Filters out audio files that are shorter than the given duration
+    """
+    filtered = [audio for audio in audio_files if len(AudioSegment.from_file(audio)) >= duration_ms]
+    if len(filtered) == 0:
+        raise ValueError("No audio files are long enough")
+    return filtered
+
+def choose_audio_from_files(audio_files : Iterable[Path]) -> Path:
+    """
+    Chooses a random audio file from the given files
+    """
+    if audio_files:
+        return random.choice(audio_files)
+    return None
+
+def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
+    """
+    Generates source audio files from the given directories - one from each directory
+    returns:
+    list of paths to the chosen audio files
+    """
+    files = []
+    for directory in source_directories:
+        clean_files = take_clean_audio(audio_directory=directory)
+        chosen_file = choose_audio_from_files(audio_files=clean_files)
+        files.append(chosen_file)
+    return files
 
 @logger.catch
 def dynamic_select_benchmark(audio_file_count : int, destination_directory: Path, source_directories: Iterable[Path], percentiles: Iterable[float], distribution : str, duration: float):
@@ -64,7 +93,9 @@ def dynamic_select_benchmark(audio_file_count : int, destination_directory: Path
         # choose audio files from each directory to mix
         segments_to_mix = []
         for j, path in enumerate(source_directories):
+            # somehow filter out short audio files
             chosen_audio_path = choose_audio(path=path)
+            segment = random_segment(audio_segment=segment, length_ms=duration_ms)
             logger.info(f"Chosen audio: {chosen_audio_path.name}")
             segment = normalize_dBFS(path=chosen_audio_path, target_dBFS=percentile_norms[j])
             segments_to_mix.append(segment)
@@ -74,13 +105,6 @@ def dynamic_select_benchmark(audio_file_count : int, destination_directory: Path
         canvas = AudioSegment.silent(duration=duration_ms)
         for j, path in enumerate(source_directories):
             segment = segments_to_mix[j]
-            if len(segment) > duration_ms:
-                segment = random_segment(audio_segment=segment, length_ms=duration_ms)
-            while len(segment) < duration_ms:
-                extra_chosen_audio_path = choose_audio(path)
-                extra_segment = normalize_dBFS(path=extra_chosen_audio_path, target_dBFS=percentile_norms[j])
-                segment = concatenate(audio_segment1=segment, audio_segment2=extra_segment, crossfade_duration=100)
-
             sc = random_coefficient()
             segment = segment - calculate_db_loss(sc)
             logger.info(f"Segment {j+1} coefficient: {sc} Volume: {segment.dBFS} dBFS")
