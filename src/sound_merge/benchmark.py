@@ -1,16 +1,13 @@
 import random
-import numpy as np
-import logging
-from typing import Union, Iterable, List
+from typing import Union, Iterable
 from pathlib import Path
+import numpy as np
 from pydub import AudioSegment
-from augm import mix_overlay, random_segment, concatenate
-from uniform import get_percentile_dBFS, normalize_dBFS, normalize_segment_dBFS
 from mutagen.wave import WAVE
-from callables import GenAudioFile
 from loguru import logger
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from .augm import mix_overlay, random_segment
+from .uniform import normalize_segment_dBFS
+from .callables import GenAudioFile
 
 pathLike = Union[str, Path]
 
@@ -48,7 +45,10 @@ def take_clean_audio(audio_directory : Path) -> list[Path]:
     """
     Cleans the audio files from hidden files
     """
-    clean_files = [file for file in audio_directory.glob('*.wav') if not file.name.startswith('._')] # ignore hidden files
+    clean_files = []
+    for file in audio_directory.glob('*.wav'):
+        if not file.name.startswith('._'):
+            clean_files.append(file)
 
     return clean_files
 
@@ -61,15 +61,8 @@ def filter_out_short_audio(audio_files: list[Path], duration_s: float) -> list[P
         raise ValueError("No audio files are long enough")
     return filtered
 
-def choose_audio_from_files(audio_files : List[Path]) -> Path:
-    """
-    Chooses a random audio file from the given files
-    """
-    if audio_files:
-        return random.choice(audio_files)
-    return None
-
-def mixture(sc1 : float, sc2 : float, audio_segment1 : AudioSegment, audio_segment2 : AudioSegment) -> AudioSegment:
+def mixture(sc1 : float, sc2 : float,
+            audio_segment1 : AudioSegment, audio_segment2 : AudioSegment) -> AudioSegment:
     """
     Mixes two audio segments with given coefficients
     """
@@ -90,7 +83,7 @@ def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
     for directory in source_directories:
         clean_files = take_clean_audio(audio_directory=directory)
         approp_files = filter_out_short_audio(audio_files=clean_files, duration_s=1)
-        chosen_file = choose_audio_from_files(audio_files=approp_files)
+        chosen_file = random.choice(approp_files)
         files.append(chosen_file)
         logger.info(f"Chosen audio file: {chosen_file}")
     return files
@@ -111,4 +104,5 @@ def bench(source_directories: list[Path], destination_directory: Path, audio_fil
     for i in range(audio_file_count):
         mixed_segment = gen_audio(target_dBFS=-14, length_s=1)
         mixed_segment.export(destination_directory / f"audio{i}.wav", format="wav")
-        logger.info(f"Generated mixed file No.{i+1} saved to: {destination_directory / f"audio{i}.wav"}")
+        logger.info(
+            f"Generated mixed file No.{i+1} saved to: {destination_directory / f"audio{i}.wav"}")
