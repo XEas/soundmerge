@@ -4,7 +4,7 @@ audio files from the given source directories
 """
 import random
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Iterable, Union, Callable, Generator
 
 import numpy as np
 from loguru import logger
@@ -94,21 +94,39 @@ def generate_source_audio(source_directories : Iterable[Path]) -> list[Path]:
         logger.info(f"Chosen audio file: {chosen_file}")
     return files
 
-def bench(source_directories: list[Path], destination_directory: Path, audio_file_count: int):
+def path_generator(source_directories : Iterable[Path], check_file : Callable[[Path], bool], n_generations: int) -> Generator[list[Path], None, None]:
+    path_pool = []
+    for directory in source_directories:
+        paths = [path for path in directory.rglob("*") if path.is_file() and not path.name.startswith(".") and check_file(path)]
+        if len(paths) == 0:
+            raise FileNotFoundError(f"No audio files found in: {directory}")
+        path_pool.append(paths)
+
+    for _ in range(n_generations):
+        yield [random.choice(paths) for paths in path_pool]
+
+
+def produce_benchmark(source_directories: list[Path], destination_directory: Path, audio_file_count: int):
     """
     Benchmark function to test the dynamic selection of audio files
     """
-    source_files = generate_source_audio(source_directories=source_directories)
+    # source_files = generate_source_audio(source_directories=source_directories)
+    
     gen_audio = GenAudioFile(
-        audio_files=source_files,
         mix_func=mixture,
         norm_func=normalize_segment_dBFS,
         augm_funcs=[random_segment, normalize_segment_dBFS],
-        final_dBFS=-14
+        final_dbfs=-14,
+        # target_dBFS=-14, length_s=1
     )
 
-    for i in range(audio_file_count):
-        mixed_segment = gen_audio(target_dBFS=-14, length_s=1)
+    paths = path_generator(
+        source_directories=source_directories,
+        check_file=gen_audio.check_file,
+        n_generations=audio_file_count,
+    )
+    for i, audio_files in enumerate(paths):
+        mixed_segment = gen_audio(audio_files=audio_files)
         dest_file = destination_directory / f"audio{i}.wav"
         mixed_segment.export(dest_file, format="wav")
         logger.info(f"Generated mixed file No.{i+1} saved to: {dest_file}")
