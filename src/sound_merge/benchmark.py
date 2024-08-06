@@ -1,18 +1,19 @@
-import logging
+"""
+This module contains the benchmark function that generates
+audio files from the given source directories
+"""
 import random
 from pathlib import Path
 from typing import Iterable, Union, Callable, Generator
 
 import numpy as np
-from callables import GenAudioFile
 from loguru import logger
 from mutagen.wave import WAVE
 from pydub import AudioSegment
 
 from .augm import mix_overlay, random_segment
 from .uniform import normalize_segment_dBFS
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from .callables import GenAudioFile
 
 PathLike = Union[str, Path]
 
@@ -31,8 +32,8 @@ def choose_volume(coefs : list, distr: str) -> float:
         return random.choice(coefs)
     if distr == 'normal':
         return np.average(np.array(coefs))
-    
-    raise ValueError("Distribution type must be 'uniform' or 'normal'") 
+
+    raise ValueError("Distribution type must be 'uniform' or 'normal'")
 
 def calculate_db_loss(percent : float) -> float:
     """
@@ -48,9 +49,12 @@ def calculate_db_loss(percent : float) -> float:
 
 def take_clean_audio(audio_directory : Path) -> list[Path]:
     """
-    Cleans the audio files from hidden files
+    Cleans the audio files from hidden files(MacOS)
     """
-    clean_files = [file for file in audio_directory.glob('*.wav') if not file.name.startswith('._')] # ignore hidden files
+    clean_files = []
+    for file in audio_directory.glob("*.wav"):
+        if not file.name.startswith("."):
+            clean_files.append(file)
 
     return clean_files
 
@@ -63,7 +67,8 @@ def filter_out_short_audio(audio_files: list[Path], duration_s: float) -> list[P
         raise ValueError("No audio files are long enough")
     return filtered
 
-def mixture(sc1 : float, sc2 : float, audio_segment1 : AudioSegment, audio_segment2 : AudioSegment) -> AudioSegment:
+def mixture(sc1 : float, sc2 : float,
+            audio_segment1 : AudioSegment, audio_segment2 : AudioSegment) -> AudioSegment:
     """
     Mixes two audio segments with given coefficients
     """
