@@ -1,10 +1,11 @@
 import os
 import shutil
 from pathlib import Path
+import logging
 
 import stempeg
 from pydub import AudioSegment
-from tool_config import *
+from tool_config import dataset_dir, logger
 
 
 def extract_stems(stem_file, output_dir):

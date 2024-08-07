@@ -4,7 +4,7 @@ import tarfile
 import zipfile
 from pathlib import Path
 
-from tool_config import *
+from tool_config import logger, data_dir, music_dir_clean, music_dir_mixed, speech_dir, libri_testset_dir, musan_speech_src, musan_music_src
 
 
 # unpack .tar.gz archive

@@ -115,9 +115,9 @@ def dynamic_select_layout(benchmark):
 
     def start_dynamic_benchmark():
         try:
-            num_files = int(num_files_entry.get())
-            dest = Path(dest_entry.get())
-            dirs = [Path(entry.get()) for entry in directories]
+            # num_files = int(num_files_entry.get())
+            # dest = Path(dest_entry.get())
+            # dirs = [Path(entry.get()) for entry in directories]
             messagebox.showinfo("Success", "Benchmark started. Check the console for progress.")
         except ValueError:
             messagebox.showerror("Error", "Please enter a valid number of files.")
