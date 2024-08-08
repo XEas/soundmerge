@@ -25,3 +25,7 @@ ipykernel = "^6.29.5"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff.lint]
+extend-select = ["C4", "SIM", "TCH"]
+ignore = []
