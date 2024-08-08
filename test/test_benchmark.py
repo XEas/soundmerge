@@ -10,10 +10,12 @@ def test_random_coefficient_range():
     coeff = random_coefficient()
     assert 0 <= coeff <= 1
 
+
 def test_calculate_db_loss_zero_percent():
     """Test if calculate_db_loss raises ValueError for 0 percent."""
     with pytest.raises(ValueError):
         calculate_db_loss(0)
+
 
 def test_calculate_db_loss_valid_percent():
     """Test if calculate_db_loss returns correct value for valid percent."""
