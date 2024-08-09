@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from loguru import logger
-from pydub import AudioSegment
+from pydub import AudioSegment  # type: ignore
 
 
 def get_median_dBFS(path: Path) -> float:

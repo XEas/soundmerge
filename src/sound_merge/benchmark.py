@@ -11,7 +11,12 @@ import numpy as np
 from loguru import logger
 from mutagen.wave import WAVE
 
-from .callables import PullAudioSegments, RandomSegment, NormalizeSegments, MixSegments
+from sound_merge.callables import (
+    PullAudioSegments,
+    RandomSegment,
+    NormalizeSegments,
+    MixSegments,
+)
 
 PathLike = Union[str, Path]
 

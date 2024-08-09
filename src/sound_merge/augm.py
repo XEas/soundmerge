@@ -2,8 +2,8 @@ import random
 
 import matplotlib.pyplot as plt
 import numpy as np
-from pydub import AudioSegment
-from scipy.signal import spectrogram
+from pydub import AudioSegment  # type: ignore
+from scipy.signal import spectrogram  # type: ignore
 
 
 def random_silence_mask(
