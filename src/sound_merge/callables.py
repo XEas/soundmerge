@@ -1,7 +1,7 @@
 """
 This module contains callable classes that are used to generate audio segments
 """
-
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable
 
@@ -52,3 +52,16 @@ class GenAudioFile:
 
     def check_file(self, audio_file: Path) -> bool:
         return True
+
+class PipelineStep(ABC):
+    """
+    Abstract class for a pipeline step.
+    """
+
+    @abstractmethod
+    def __call__(self, audio_files: list[Path], **kwargs: Any) -> AudioSegment:
+        pass
+
+    @abstractmethod
+    def check_file(self, audio_file: Path) -> bool:
+        pass
