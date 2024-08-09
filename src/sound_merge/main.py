@@ -1,11 +1,5 @@
 import config
 from benchmark import produce_benchmark
-from benchmark_gui import dynamic_select_layout
-
-
-def main(benchmark):
-    dynamic_select_layout(benchmark)
-
 
 def run():
     src = config.music_detection
