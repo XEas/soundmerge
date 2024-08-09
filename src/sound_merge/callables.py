@@ -1,11 +1,14 @@
 """
 This module contains callable classes that are used to generate audio segments
 """
+
 from abc import ABC, abstractmethod
 from pathlib import Path
+import random
 from typing import Any, Callable
 
-from pydub import AudioSegment
+import numpy as np
+from pydub import AudioSegment  # type: ignore
 
 
 class GenAudioFile:
@@ -53,15 +56,130 @@ class GenAudioFile:
     def check_file(self, audio_file: Path) -> bool:
         return True
 
+
 class PipelineStep(ABC):
     """
-    Abstract class for a pipeline step.
+    Base abstract class for a pipeline step.
+    """
+
+
+class PipelineStepWithDirs(PipelineStep):
+    """
+    Abstract class for pipeline steps that operate on file paths.
     """
 
     @abstractmethod
-    def __call__(self, audio_files: list[Path], **kwargs: Any) -> AudioSegment:
+    def __call__(self, source_dirs: list[Path]) -> list[AudioSegment]:
         pass
 
+
+class PipelineStepWithSegment(PipelineStep):
+    """
+    Abstract class for pipeline steps that operate on AudioSegment objects.
+    """
+
     @abstractmethod
-    def check_file(self, audio_file: Path) -> bool:
+    def __call__(self, audio_segments: list[AudioSegment]) -> list[AudioSegment]:
         pass
+
+
+class PullAudioSegments(PipelineStepWithDirs):
+    """
+    A pipeline step that pulls an audio file from each directory.
+
+    Takes a list of directories and returns a list of audiosegments.
+    """
+
+    def __call__(self, source_dirs: list[Path]) -> list[AudioSegment]:
+        chosen_files = []
+        for directory in source_dirs:
+            paths = [
+                path
+                for path in directory.rglob("*")
+                if path.is_file()
+                and not path.name.startswith(".")
+                and self.check_file(path)
+            ]
+            if len(paths) == 0:
+                raise FileNotFoundError(f"No audio files found in: {directory}")
+            chosen_files.append(AudioSegment.from_file(random.choice(paths)))
+        return chosen_files
+
+    def check_file(self, audio_file: Path) -> bool:
+        return True
+
+
+class RandomSegment(PipelineStepWithSegment):
+    """
+    A pipeline step that generates a random segment from an audio file.
+    """
+
+    def random_segment(self, audio_segment: AudioSegment) -> AudioSegment:
+        length_ms = int(1000 * self._len_s)
+        start = random.randint(0, len(audio_segment) - length_ms)
+        return audio_segment[start : start + length_ms]
+
+    def __init__(self, len_s: float):
+        self._len_s = len_s
+
+    def __call__(self, audio_segments: list[AudioSegment]) -> list[AudioSegment]:
+        return [self.random_segment(audio_segment) for audio_segment in audio_segments]
+
+
+class NormalizeSegments(PipelineStepWithSegment):
+    """
+    A pipeline step that normalizes an audio segment.
+    """
+
+    def __init__(self, target_dBFS: float):
+        self._target_dBFS = target_dBFS
+
+    def __call__(self, audio_segments: list[AudioSegment]) -> list[AudioSegment]:
+        return [
+            audio_segment.apply_gain(self._target_dBFS - audio_segment.dBFS)
+            for audio_segment in audio_segments
+        ]
+
+
+class MixSegments(PipelineStepWithSegment):
+    """
+    A pipeline step that mixes audio segments.
+    """
+
+    def _calculate_db_loss(self, percent: float) -> float:
+        """
+        Calculates the dB loss from the given percentage.
+        """
+        if not 0 <= percent <= 1:
+            raise ValueError("Percent must be between 0 and 1.")
+        if percent == 0:
+            raise ValueError(
+                "Percent of 0 indicates infinite dB loss, which is not representable."
+            )
+        if percent == 1:
+            return 0
+        return -10 * np.log10(percent)
+
+    def _mix_w_coef(
+        self,
+        sc1: float,
+        sc2: float,
+        audio_segment1: AudioSegment,
+        audio_segment2: AudioSegment,
+    ) -> AudioSegment:
+        """
+        Mixes two audio segments with given coefficients
+        """
+        enh1 = audio_segment1 - self._calculate_db_loss(sc1)
+        enh2 = audio_segment2 - self._calculate_db_loss(sc2)
+        mixed_segment = enh1.overlay(enh2)
+
+        return mixed_segment
+
+    def __call__(self, audio_segments: list[AudioSegment]) -> list[AudioSegment]:
+        mixed_segment = audio_segments[0]
+        for segment in audio_segments:
+            mixed_segment = self._mix_w_coef(
+                sc1=1, sc2=0.5, audio_segment1=mixed_segment, audio_segment2=segment
+            )
+        return mixed_segment

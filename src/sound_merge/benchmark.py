@@ -14,7 +14,7 @@ from pydub import AudioSegment
 
 from .augm import mix_overlay, random_segment
 from .uniform import normalize_segment_dBFS
-from .callables import GenAudioFile
+from .callables import PullAudioSegments, RandomSegment, NormalizeSegments, MixSegments
 
 PathLike = Union[str, Path]
 
@@ -73,24 +73,11 @@ def filter_out_short_audio(audio_files: list[Path], duration_s: float) -> list[P
     filtered = [
         audio
         for audio in audio_files
-        if audio and WAVE(audio).info.length >= duration_s
+        if audio and WAVE(audio).info.length >= duration_s  # type: ignore
     ]
     if len(filtered) == 0:
         raise ValueError("No audio files are long enough")
     return filtered
-
-
-def mixture(
-    sc1: float, sc2: float, audio_segment1: AudioSegment, audio_segment2: AudioSegment
-) -> AudioSegment:
-    """
-    Mixes two audio segments with given coefficients
-    """
-    enh1 = audio_segment1 - calculate_db_loss(sc1)
-    enh2 = audio_segment2 - calculate_db_loss(sc2)
-    mixed_segment = mix_overlay(enh1, enh2)
-
-    return mixed_segment
 
 
 @logger.catch
@@ -138,21 +125,34 @@ def produce_benchmark(
     """
     # source_files = generate_source_audio(source_directories=source_directories)
 
-    gen_audio = GenAudioFile(
-        mix_func=mixture,
-        norm_func=normalize_segment_dBFS,
-        augm_funcs=[random_segment, normalize_segment_dBFS],
-        final_dbfs=-14,
-        # target_dBFS=-14, length_s=1
-    )
+    # gen_audio = GenAudioFile(
+    #     mix_func=mixture,
+    #     norm_func=normalize_segment_dBFS,
+    #     augm_funcs=[random_segment, normalize_segment_dBFS],
+    #     final_dbfs=-14,
+    #     # target_dBFS=-14, length_s=1
+    # )
 
-    paths = path_generator(
-        source_directories=source_directories,
-        check_file=gen_audio.check_file,
-        n_generations=audio_file_count,
-    )
-    for i, audio_files in enumerate(paths):
-        mixed_segment = gen_audio(audio_files=audio_files)
-        dest_file = destination_directory / f"audio{i}.wav"
-        mixed_segment.export(dest_file, format="wav")
-        logger.info(f"Generated mixed file No.{i+1} saved to: {dest_file}")
+    # paths = path_generator(
+    #     source_directories=source_directories,
+    #     check_file=gen_audio.check_file,
+    #     n_generations=audio_file_count,
+    # )
+    # for i, audio_files in enumerate(paths):
+    #     mixed_segment = gen_audio(audio_files=audio_files)
+    #     dest_file = destination_directory / f"audio{i}.wav"
+    #     mixed_segment.export(dest_file, format="wav")
+    #     logger.info(f"Generated mixed file No.{i+1} saved to: {dest_file}")
+
+    segment_puller = PullAudioSegments()
+    random_segmenter = RandomSegment(len_s=10)
+    normalizer = NormalizeSegments(target_dBFS=-14)
+    mixer = MixSegments()
+
+    for _ in range(audio_file_count):
+        audio_segments = segment_puller(source_directories)
+        audio_segments = random_segmenter(audio_segments)
+        audio_segments = normalizer(audio_segments)
+        mixed_segment = mixer(audio_segments)
+        dest_file = destination_directory / "mixed_audio.wav"
+        mixed_segment[0].export(dest_file, format="wav")
