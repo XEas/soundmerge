@@ -1,6 +1,7 @@
 import config
 from benchmark import produce_benchmark
 
+
 def run():
     src = config.music_detection
     dirs = [src / "test" / "music1", src / "test" / "speech1", src / "test" / "music2"]

@@ -3,8 +3,8 @@ import shutil
 from pathlib import Path
 import logging
 
-import stempeg
-from pydub import AudioSegment
+import stempeg #type: ignore
+from pydub import AudioSegment #type: ignore
 from tool_config import dataset_dir, logger
 
 
@@ -48,7 +48,7 @@ def process_stems(stem_dir: Path, output_dir: Path):
                     i += 1
                     logging.info(f"Extracted file {i-1}: {item.name}")
             except shutil.Error as e:
-                logger.ERROR(f"Error {files_failed} extracting file: {e}")
+                logger.error(f"Error {files_failed} extracting file: {e}")
                 files_failed += 1
         elif item.is_dir():
             process_stems(stem_dir / item.name, i)
