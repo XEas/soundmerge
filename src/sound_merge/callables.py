@@ -5,56 +5,55 @@ This module contains callable classes that are used to generate audio segments
 from abc import ABC, abstractmethod
 from pathlib import Path
 import random
-from typing import Any, Callable
 
 import numpy as np
 from pydub import AudioSegment  # type: ignore
 
 
-class GenAudioFile:
-    """
-    Callable class that generates one audio segment from given list of audio segments
-    and parameters to augment/filter these segments. It also accepts a list of functions
-    to normalize, augment, and mix the audio segments.
+# class GenAudioFile:
+#     """
+#     Callable class that generates one audio segment from given list of audio segments
+#     and parameters to augment/filter these segments. It also accepts a list of functions
+#     to normalize, augment, and mix the audio segments.
 
-    Parameters for __call__:
-    - target_dBFS (float): The target dBFS for normalization.
-    - length_ms (int)
-    """
+#     Parameters for __call__:
+#     - target_dBFS (float): The target dBFS for normalization.
+#     - length_ms (int)
+#     """
 
-    def __init__(
-        self,
-        mix_func: Callable,
-        norm_func: Callable,
-        augm_funcs: list[Callable],
-        final_dbfs: float,
-    ):
-        # self.audio_files = audio_files
-        self._augm_funcs = augm_funcs
-        self._norm_func = norm_func
-        self._mix_func = mix_func
-        self._final_dbfs = final_dbfs
+#     def __init__(
+#         self,
+#         mix_func: Callable,
+#         norm_func: Callable,
+#         augm_funcs: list[Callable],
+#         final_dbfs: float,
+#     ):
+#         # self.audio_files = audio_files
+#         self._augm_funcs = augm_funcs
+#         self._norm_func = norm_func
+#         self._mix_func = mix_func
+#         self._final_dbfs = final_dbfs
 
-    def __call__(self, audio_files: list[Path], **kwargs: Any) -> AudioSegment:
-        processed_segments = []
-        for audio_file in audio_files:
-            segment = AudioSegment.from_file(audio_file)
-            for func in self._augm_funcs:
-                segment = func(segment, **kwargs)
-            processed_segments.append(segment)
+#     def __call__(self, audio_files: list[Path], **kwargs: Any) -> AudioSegment:
+#         processed_segments = []
+#         for audio_file in audio_files:
+#             segment = AudioSegment.from_file(audio_file)
+#             for func in self._augm_funcs:
+#                 segment = func(segment, **kwargs)
+#             processed_segments.append(segment)
 
-        mixed_segment = processed_segments[0]
-        for segment in processed_segments:
-            mixed_segment = self._mix_func(
-                sc1=1, sc2=0.5, audio_segment1=mixed_segment, audio_segment2=segment
-            )
-            mixed_segment = self._norm_func(
-                segment=mixed_segment, target_dBFS=self._final_dbfs
-            )
-        return mixed_segment
+#         mixed_segment = processed_segments[0]
+#         for segment in processed_segments:
+#             mixed_segment = self._mix_func(
+#                 sc1=1, sc2=0.5, audio_segment1=mixed_segment, audio_segment2=segment
+#             )
+#             mixed_segment = self._norm_func(
+#                 segment=mixed_segment, target_dBFS=self._final_dbfs
+#             )
+#         return mixed_segment
 
-    def check_file(self, audio_file: Path) -> bool:
-        return True
+#     def check_file(self, audio_file: Path) -> bool:
+#         return True
 
 
 class PipelineStep(ABC):
@@ -63,7 +62,7 @@ class PipelineStep(ABC):
     """
 
 
-class PipelineStepWithDirs(PipelineStep):
+class FileBasedPipelineStep(PipelineStep):
     """
     Abstract class for pipeline steps that operate on file paths.
     """
@@ -73,7 +72,7 @@ class PipelineStepWithDirs(PipelineStep):
         pass
 
 
-class PipelineStepWithSegment(PipelineStep):
+class SegmentBasedPipelineStep(PipelineStep):
     """
     Abstract class for pipeline steps that operate on AudioSegment objects.
     """
@@ -83,7 +82,7 @@ class PipelineStepWithSegment(PipelineStep):
         pass
 
 
-class PullAudioSegments(PipelineStepWithDirs):
+class PullAudioSegments(FileBasedPipelineStep):
     """
     A pipeline step that pulls an audio file from each directory.
 
@@ -98,24 +97,26 @@ class PullAudioSegments(PipelineStepWithDirs):
                 for path in directory.rglob("*")
                 if path.is_file()
                 and not path.name.startswith(".")
-                and self.check_file(path)
+                and self._check_file(path)
             ]
             if len(paths) == 0:
                 raise FileNotFoundError(f"No audio files found in: {directory}")
             chosen_files.append(AudioSegment.from_file(random.choice(paths)))
         return chosen_files
 
-    def check_file(self, audio_file: Path) -> bool:
+    def _check_file(self, audio_file: Path) -> bool:
         return True
 
 
-class RandomSegment(PipelineStepWithSegment):
+class RandomSegment(SegmentBasedPipelineStep):
     """
     A pipeline step that generates a random segment from an audio file.
     """
 
     def random_segment(self, audio_segment: AudioSegment) -> AudioSegment:
         length_ms = int(1000 * self._len_s)
+        if len(audio_segment) <= length_ms:
+            return audio_segment
         start = random.randint(0, len(audio_segment) - length_ms)
         return audio_segment[start : start + length_ms]
 
@@ -126,7 +127,7 @@ class RandomSegment(PipelineStepWithSegment):
         return [self.random_segment(audio_segment) for audio_segment in audio_segments]
 
 
-class NormalizeSegments(PipelineStepWithSegment):
+class NormalizeSegments(SegmentBasedPipelineStep):
     """
     A pipeline step that normalizes an audio segment.
     """
@@ -141,7 +142,7 @@ class NormalizeSegments(PipelineStepWithSegment):
         ]
 
 
-class MixSegments(PipelineStepWithSegment):
+class MixSegments(SegmentBasedPipelineStep):
     """
     A pipeline step that mixes audio segments.
     """
@@ -178,7 +179,7 @@ class MixSegments(PipelineStepWithSegment):
 
     def __call__(self, audio_segments: list[AudioSegment]) -> list[AudioSegment]:
         mixed_segment = audio_segments[0]
-        for segment in audio_segments:
+        for segment in audio_segments[1:]:
             mixed_segment = self._mix_w_coef(
                 sc1=1, sc2=0.5, audio_segment1=mixed_segment, audio_segment2=segment
             )
