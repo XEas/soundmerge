@@ -10,10 +10,7 @@ from typing import Iterable, Union, Callable, Generator
 import numpy as np
 from loguru import logger
 from mutagen.wave import WAVE
-from pydub import AudioSegment
 
-from .augm import mix_overlay, random_segment
-from .uniform import normalize_segment_dBFS
 from .callables import PullAudioSegments, RandomSegment, NormalizeSegments, MixSegments
 
 PathLike = Union[str, Path]
